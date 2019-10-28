@@ -36,6 +36,8 @@ typedef enum
     T_RBRACK,       ///Right bracket (
     T_EQ_ASSIG,     ///Asign =
     T_LBRACK,       ///Left bracket )
+    T_COLON,        ///Colon :
+
     T_EQ_COMP,      ///Compare ==
     T_NEQ,          ///Not equal !=
     T_MORE,         ///More than >
