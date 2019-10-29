@@ -168,7 +168,7 @@ void assignTokenType(T_token *out_token, Token in_token) {
                 out_token->type = T_RBRACK;
             else if (strcmp(in_token.value, ")") == 0)
                 out_token->type = T_LBRACK;
-            else if(strcmp(in_token.type, ":") == 0)
+            else if(strcmp(in_token.value, ":") == 0)
                 out_token->type = T_COLON;
             break;
         case INDENT:
