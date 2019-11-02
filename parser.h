@@ -12,10 +12,10 @@
 
 #include "scanner.h"
 #include "dynid.h"
-#include "error.h"
+#include "err.h"
 #include "symtable.h"
 //#include "func.h"
-// "expresions.h"
+#include "expresions.h"
 
 // hlavicka pro syntakticky analyzator
 
@@ -45,3 +45,4 @@ typedef struct
 
 
 int parse();
+int expression(MainData* data);

@@ -6,6 +6,7 @@
 #include "structs.h"
 #include "symtable.h"
 #include "stack.h"
+#include "parser.h"
 
 STmaintablePtr globalSymTable;
 extern Stack indentationStack;
@@ -23,13 +24,15 @@ int main(int argc, char* argv[])	{
     //evaluateInput(argc);
     createScanner(argv[1]);			//argv[1] == path
     DLInitList(tokenQueue);
-    indentationStack = initStack();
+    //indentationStack = initStack();
     globalSymTable = init_table(10);
 
     // this is how you get a token from scanner ready to be parsed
 //    T_token *token;
 //    token = token_init(token);
 //    getParserToken(token);
+
+    parse();
 
     table_delete(&globalSymTable);
     DLDisposeList(tokenQueue);
