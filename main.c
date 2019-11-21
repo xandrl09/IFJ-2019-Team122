@@ -33,7 +33,11 @@ int main(int argc, char* argv[])	{
 //    getParserToken(token);
 
     parse();
-
+    parse();
+    parse();
+    parse();
+    parse();
+    printQueueContents(tokenQueue);
     table_delete(&globalSymTable);
     DLDisposeList(tokenQueue);
     return 0;

@@ -11,7 +11,6 @@
 #pragma once
 
 #include "scanner.h"
-#include "dynid.h"
 #include "err.h"
 #include "symtable.h"
 //#include "func.h"
@@ -34,7 +33,7 @@ typedef struct
 
     T_token *func_id;
 
-    dyn_id* str;
+    char* str;
 
     bool in_function;			/// Defines if the parser is in function
 

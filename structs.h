@@ -1,7 +1,6 @@
 #ifndef IFJ_STRUCTS
 #define IFJ_STRUCTS
 
-#include "dynid.h"
 
 
 
@@ -15,7 +14,7 @@ typedef struct Token {
     tokenType type;
     struct Token *lptr;
     struct Token *rptr;
-    char* value;
+    char value[255];
 } Token;
 
 typedef struct tDLList  {                                  /* dvousměrně vázaný seznam */

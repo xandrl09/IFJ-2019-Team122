@@ -13,13 +13,10 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
-#include <io.h>
-#include <errno.h>
 
 #include "scanner.h"
 #include "err.h"
 #include "stack.h"
-#include "dynid.h"
 
 Stack indentationStack;
 extern tDLList *tokenQueue; // this is necessary because of scanner-parser interface
@@ -35,11 +32,6 @@ int createScanner(char *path) {
     inputFile = fopen(path, "r");
     if (inputFile == NULL) {
         fprintf(stderr, "File cannot be opened!\n");
-        char cwd[1024];
-        if (getcwd(cwd, sizeof(cwd)) != NULL)
-            fprintf(stderr, "Your current working directory is %s\n", cwd);
-        else
-            fprintf(stderr, "Error occured while fetching your current working directory\n");
         return -1;
     }
     return 0;
@@ -50,14 +42,19 @@ int createScanner(char *path) {
 int getParserToken(T_token *token) {
     if (tokenQueue == NULL || tokenQueue->First == NULL)
         getLineOfTokens(tokenQueue);
-    if(tokenQueue->Act == NULL)
+
+    if(tokenQueue->Act == NULL) {
         DLFirst(tokenQueue);
+    }
 
     token = turnScannerTokensToParserTokens(*tokenQueue->Act);
-    // printf("Token %s parsed.\n", tokenQueue->Act->value);
+    //printf("Token %s parsed.\n", tokenQueue->Act->value);
     DLSucc(tokenQueue);
-    if (token->type == T_EOL)
+
+    if (tokenQueue->Act == NULL) {
+        printQueueContents(tokenQueue);
         getLineOfTokens(tokenQueue);
+    }
 }
 
 
@@ -69,21 +66,19 @@ T_token *turnScannerTokensToParserTokens(Token token) {
 }
 
 void assignTokenData(T_token *out_token, Token in_token) {
-    dyn_id *val = dyn_id_from_constr(in_token.value);
     switch (in_token.type) {
         case integer:
-            out_token->data->u_int = parse_dyn_id_to_int(val);
+            out_token->data->u_int = atoi(in_token.value);
             break;
         case floatingPoint:
-            out_token->data->u_double = parse_dyn_id_to_double(val);
+            out_token->data->u_double = atol(in_token.value);
             break;
-        default:
-            out_token->data->string = val;
+        //default:
+            //out_token->data->string = in_token.value;
     }
 }
 
 
-// TODO dokodit
 void assignTokenType(T_token *out_token, Token in_token) {
     switch (in_token.type) {
         case error:
@@ -191,61 +186,42 @@ void assignTokenType(T_token *out_token, Token in_token) {
     }
 }
 
-// shamelessly stolen
 T_token *token_init() {
     struct T_token *token = malloc(sizeof(T_token));
     token->data = malloc(sizeof(T_tokenData));
     return token;
 }
 
-char *appendToString(char c, char string[], enum stateMachineStates state) {
+void appendToString(char c, char string[], enum stateMachineStates state) {
     if (state != STATE_STRING && state != STATE_DOCSTRING) {
         if (isspace(c) || c == '\n') { //potencialni chyba
-            return string;
+            return;
         }
     }
-    char arr[2] = "";
-    arr[0] = c;
-    arr[1] = '\0';
-    char *ret;
-    ret = malloc(strlen(string) + 2); /* one for extra char, one for \0 */
-    // This is not pretty, but hear me out.
-    // When running this program in CLion, it crashed as segfault, for some damn reason, but not in debug mode.
-    // This is an awful hack but it just works
-    if (ret == NULL) {
-        for (int i = 1000; i < 100001; i *= 10) {
-            ret = malloc(i);
-            if (ret != NULL)
-                break;
+    for(int i = 0; i < MAX_TOKEN_LEN - 1; i++) {
+        if (string[i] == '\0') {
+            string[i] = c;
+            string[i+1] = '\0';
+            break;
         }
     }
-    strcpy(ret, string);
-    strcat(ret, arr);
-    return ret;
 }
 
-char *returnLastCharToInput(char *buffer, char receivedChar) {
+void returnLastCharToInput(char *buffer, char receivedChar) {
     if (receivedChar == '\r')
-        return buffer;
+        return;
     ungetc(receivedChar, inputFile);
-    buffer = sliceString(buffer, strlen(buffer) - 1);
-    return buffer;
+    sliceString(buffer, strlen(buffer) - 1);
 }
 
 // how many tokens should be preserved, the rest is cut away
-char *sliceString(char *string, size_t size) {
-    char *ret = malloc(sizeof(string));
-    strcpy(ret, "");
-
-    int i;
-    for (i = 0; i < size; i++)
-        ret[i] = string[i];
-
-    ret[i++] = '\0';
-    for (; i < sizeof(string); i++) {
-        ret[i] = 0;
+void sliceString(char *string, size_t size) {
+    for(int i = 0; i < MAX_TOKEN_LEN; i++)  {
+        if (string[i] == '\0' && i > 0) {
+            string[i-1] = '\0';
+            break;
+        }
     }
-    return ret;
 }
 
 
@@ -271,7 +247,6 @@ void saveTokenAndReset(tDLList *L, tokenType ttype, char *val, enum stateMachine
         *state = STATE_START;
     if (strcmp(val, "") != 0)
         strcpy(val, "");
-
     L->Act = L->First;
 }
 
@@ -350,18 +325,18 @@ void handleEOF(tDLList *tokenQueue, char *buffer, enum stateMachineStates *state
 
 char *handleEscapeSequence(char receivedChar, char *buffer) {
     if (receivedChar == '\\') {
-        buffer = sliceString(buffer, strlen(buffer) - 1);
+        sliceString(buffer, strlen(buffer) - 1);
     } else if (receivedChar == 'n') {
-        buffer = sliceString(buffer, strlen(buffer) - 2);
+        sliceString(buffer, strlen(buffer) - 2);
         strcat(buffer, "\n");
     } else if (receivedChar == 't') {
-        buffer = sliceString(buffer, strlen(buffer) - 2);
+        sliceString(buffer, strlen(buffer) - 2);
         strcat(buffer, "\t");
     } else if (receivedChar == 's') {
-        buffer = sliceString(buffer, strlen(buffer) - 2);
+        sliceString(buffer, strlen(buffer) - 2);
         strcat(buffer, " ");
     } else if (receivedChar == '\'') {
-        buffer = sliceString(buffer, strlen(buffer) - 2);
+        sliceString(buffer, strlen(buffer) - 2);
         strcat(buffer, "\'");
     } else if (receivedChar == 'x') {
         char input[3] = {0, 0, 0};
@@ -377,7 +352,7 @@ char *handleEscapeSequence(char receivedChar, char *buffer) {
 
             int resInt = strtol(exp, NULL, 16);
             char resChar[12];   //every integer should fit in this
-            buffer = sliceString(buffer, strlen(buffer) - 2); //slice away '\x'
+            sliceString(buffer, strlen(buffer) - 2); //slice away '\x'
             sprintf(resChar, "%c", resInt);
             strcat(buffer, resChar);
         } else {
@@ -483,13 +458,13 @@ void runToEndOfDocString(char *buffer) {
     while (found == 0) {
         // run to next "
         while ((receivedChar = (char) fgetc(inputFile)) != '"') {
-            buffer = appendToString(receivedChar, buffer, STATE_DOCSTRING);
+            appendToString(receivedChar, buffer, STATE_DOCSTRING);
         }
-        buffer = appendToString(receivedChar, buffer, STATE_DOCSTRING);
+         appendToString(receivedChar, buffer, STATE_DOCSTRING);
         int cnt = 1;
         while (1) {
             receivedChar = (char) fgetc(inputFile);
-            buffer = appendToString(receivedChar, buffer, STATE_DOCSTRING);
+            appendToString(receivedChar, buffer, STATE_DOCSTRING);
             if (receivedChar != '"')
                 cnt = 0;
             else
@@ -567,7 +542,7 @@ void getLineOfTokens(tDLList *tokenQueue) {
     DLDisposeList(tokenQueue);
     char receivedChar;
     char previousChar = '\0';
-    char *buffer = "";
+    char buffer[MAX_TOKEN_LEN] = "";
     enum stateMachineStates currentState = STATE_START;
     int positionInLine = 0;
     int handledIndentation = 0;
@@ -581,7 +556,7 @@ void getLineOfTokens(tDLList *tokenQueue) {
             && currentState != STATE_LINE_COMMENT) {
             errLex();
         }
-        buffer = appendToString(receivedChar, buffer, currentState);
+        appendToString(receivedChar, buffer, currentState);
 
         switch (currentState) {
             case STATE_START:   // start of state machine
@@ -592,8 +567,8 @@ void getLineOfTokens(tDLList *tokenQueue) {
                     if (positionInLine == -2) { // in case it's documentationString
                         currentState = STATE_DOCSTRING;
                         blockCommentFlag = 1;
-                        buffer = appendToString('"', buffer, currentState);
-                        buffer = appendToString('"', buffer, currentState);
+                        appendToString('"', buffer, currentState);
+                        appendToString('"', buffer, currentState);
                     }
                     handledIndentation++;
                     positionInLine = 0;
@@ -634,7 +609,7 @@ void getLineOfTokens(tDLList *tokenQueue) {
                 } else if (isWhitespace(receivedChar)) {
                     saveTokenAndReset(tokenQueue, identifier, buffer, &currentState, positionInLine++);
                 } else if ((!isLetter(receivedChar) && !isDigit(receivedChar)) || isDelimiter(receivedChar)) {
-                    buffer = returnLastCharToInput(buffer, receivedChar);
+                    returnLastCharToInput(buffer, receivedChar);
                     saveTokenAndReset(tokenQueue, identifier, buffer, &currentState, positionInLine++);
                 }
                 break;
@@ -645,7 +620,7 @@ void getLineOfTokens(tDLList *tokenQueue) {
                 } else if ((!isDigit(receivedChar) && !isLetter(receivedChar))
                            || isSpecialChar(receivedChar)) {
 
-                    buffer = returnLastCharToInput(buffer, receivedChar);
+                    returnLastCharToInput(buffer, receivedChar);
                     saveTokenAndReset(tokenQueue, identifier, buffer, &currentState, positionInLine++);
                 }
                 break;
@@ -680,7 +655,7 @@ void getLineOfTokens(tDLList *tokenQueue) {
                 } else if (isDelimiter(receivedChar)) {
                     saveTokenAndReset(tokenQueue, floatingPoint, buffer, &currentState, positionInLine++);
                 } else if (!isDigit(receivedChar)) {
-                    buffer = returnLastCharToInput(buffer, receivedChar);
+                    returnLastCharToInput(buffer, receivedChar);
                     saveTokenAndReset(tokenQueue, floatingPoint, buffer, &currentState, positionInLine++);
                 }
                 break;
@@ -704,7 +679,7 @@ void getLineOfTokens(tDLList *tokenQueue) {
                     }
                 } else if ((!isDigit(receivedChar)) && receivedChar != '+' && receivedChar != '-'
                            && previousChar != 'e' && previousChar != 'E') {
-                    buffer = returnLastCharToInput(buffer, receivedChar);
+                    returnLastCharToInput(buffer, receivedChar);
                     if (!checkExponent(buffer)) {
                         currentState = STATE_ERROR;
                         continue;
@@ -717,7 +692,7 @@ void getLineOfTokens(tDLList *tokenQueue) {
                 if (isDelimiter(receivedChar)) {
                     saveTokenAndReset(tokenQueue, keyword, buffer, &currentState, positionInLine++);
                 } else if ((!isLetter(receivedChar) && !isDigit(receivedChar)) && receivedChar != '_') {
-                    buffer = returnLastCharToInput(buffer, receivedChar);
+                    returnLastCharToInput(buffer, receivedChar);
                     saveTokenAndReset(tokenQueue, keyword, buffer, &currentState, positionInLine++);
                 } else {
                     currentState = STATE_KW_ID;
@@ -727,12 +702,12 @@ void getLineOfTokens(tDLList *tokenQueue) {
             case STATE_OPERATOR:    // state for operator
                 if (receivedChar != '=' && previousChar == '!') {
                     if (!isWhitespace(receivedChar))
-                        buffer = returnLastCharToInput(buffer, receivedChar);
+                        returnLastCharToInput(buffer, receivedChar);
                     currentState = STATE_ERROR;
                 } else {
                     if ((receivedChar != '/' && receivedChar != '=' && !isWhitespace(receivedChar)) ||
                         strlen(buffer) > 2) {
-                        buffer = returnLastCharToInput(buffer, receivedChar);
+                        returnLastCharToInput(buffer, receivedChar);
                     }
                     saveTokenAndReset(tokenQueue, Operator, buffer, &currentState, positionInLine++);
                 }
@@ -741,7 +716,7 @@ void getLineOfTokens(tDLList *tokenQueue) {
                     saveTokenAndReset(tokenQueue, string, buffer, &currentState, positionInLine++);
                 }
                 if (previousChar == '\\') {       // in case there's escape sequence
-                    buffer = handleEscapeSequence(receivedChar, buffer);
+                    handleEscapeSequence(receivedChar, buffer);
                     receivedChar = 0;
                 }
                 break;
@@ -758,7 +733,7 @@ void getLineOfTokens(tDLList *tokenQueue) {
                     runToEndOfDocString(buffer);
                     if (isBlockComment(buffer)) {    //found end
                         blockCommentFlag = 0;
-                        //buffer = sliceString(buffer, strlen(buffer) - 3); - changed 27.10.
+                        //sliceString(buffer, strlen(buffer) - 3); - changed 27.10.
                         saveTokenAndReset(tokenQueue, docString, buffer, &currentState, positionInLine++);
                     }
                 } else {

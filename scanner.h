@@ -14,6 +14,8 @@
 #define NUMBER_OF_KEYWORDS 7
 #define NUMBER_OF_DELIMITERS 3
 
+#define MAX_TOKEN_LEN 255
+
 
 // In case you want the scanner to scan the whole file, set this value to 1
 // In case you want the scanner to scan only one line of input code, set this value to 0
@@ -21,7 +23,6 @@
 
 #include "queue.h"
 #include "structs.h"
-
 
 
 typedef enum stateMachineStates	{
@@ -82,7 +83,8 @@ typedef enum
 
 // Parser-side Tokens
 typedef union   {
-    dyn_id *string;
+    //dyn_id *string;
+    char *string;
     int u_int;
     double u_double;
 } T_tokenData;
@@ -113,9 +115,9 @@ T_token* turnScannerTokensToParserTokens(Token token);
 
 
 // used to work with strings
-char* appendToString(char c, char string[], enum stateMachineStates state);
-char* returnLastCharToInput(char* buffer, char receivedChar);
-char* sliceString(char *string, size_t size);
+void appendToString(char c, char string[], enum stateMachineStates state);
+void returnLastCharToInput(char *buffer, char receivedChar);
+void sliceString(char *string, size_t size);
 char* handleEscapeSequence(char receivedChar, char *buffer);
 void handleEOF(tDLList *tokenQueue, char *buffer, enum stateMachineStates *state, int positionInLine);
 

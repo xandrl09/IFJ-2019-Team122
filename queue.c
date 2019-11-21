@@ -42,7 +42,7 @@ void DLDisposeList (tDLList *L) {
 ** uvolněny voláním operace free.
 **/
     if(L == NULL)	{
-        printf("kokotko");
+        return;
     }
     if (L->First != NULL) { //pokud seznam neni prazdny
         L->Last = NULL;
@@ -83,9 +83,7 @@ void DLInsertLast(tDLList *L, tokenType ttype, char *val, int positionInLine) {
         elemPtr->type = ttype;
         elemPtr->positionInLine = positionInLine;
 
-        char* differentBuffer = malloc(sizeof(val));
-        strcpy(differentBuffer, val);
-        elemPtr->value = differentBuffer;
+        strcpy(elemPtr->value, val);
 
         if (L->Last != NULL)        {   //jestlize seznam neni prazdny
             L->Last->rptr = elemPtr;    //pripojeni prvku na konec seznamu
