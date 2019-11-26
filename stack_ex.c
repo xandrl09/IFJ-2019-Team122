@@ -1,162 +1,131 @@
-
+/**
+ * @author Ondřej Andrla
+ * Year 2019
+ */
 
 #include "stack_ex.h"
 
+/**
+ * Inicialization of stack.
+ * @return New stack.
+ */
+expression_stack *expression_stack_init()
+{
+    expression_stack *new = malloc(sizeof(expression_stack));
+    new->top = NULL;
+    return new;
+}
 
-stack_exp *ex_stack_init(){
-    stack_exp *new = malloc(sizeof(stack_exp));
-    if(new){
-        new->head = NULL;
-        return new;
+
+/**
+ * Put list on top of stack.
+ * @param target Pointer to stack.
+ * @param data Type of list.
+ */
+void expression_stack_push(expression_stack *target, symbol_enum data)
+{
+    expression_list *item = malloc(sizeof(expression_list));
+    item->symbol = data;
+    target->top = item;
+}
+
+
+/**
+ * Destroy list on top of stack.
+ * @param target Pointer to stack.
+ */
+void expression_stack_pop(expression_stack *target)
+{
+    expression_list *successor = target->top->next;
+    free(target->top);
+    target->top = successor;
+}
+
+
+/**
+ * Return first list which is terminal.
+ * @param target Pointer to stack.
+ * @return first list which is terminal.
+ */
+expression_list* stack_top_terminal(expression_stack* target)
+{
+    for (expression_list* list = target->top; list != NULL; list = list->next)
+    {
+        if (list->symbol < STOP)
+            return list;
     }
-
     return NULL;
 }
 
 
-list_exp* ex_stack_top(stack_exp* target)
+/**
+ *
+ * @param target Pointer to stack.
+ * @param symbol
+ * @return
+ */
+bool insert_after_top_terminal(expression_stack* target, symbol_enum symbol)
 {
-    for (list_exp* tmp = target->head; tmp != NULL; tmp = tmp->next)
+    expression_list* previous = NULL;
+
+    for (expression_list* tempo = target->top; tempo != NULL; tempo = tempo->next)
     {
-        if (tmp->symbol < STOP)
-            return tmp;
-    }
-
-    return NULL;
-}
-
-int ex_stack_push(stack_exp *target, symbol_enum data){
-
-    if(target) {
-        list_exp *item = malloc(sizeof(list_exp));
-        if (item) {
-            item->symbol = data;
-            if (target->head){
-                item->next = target->head;
-                target->head = item;
-
-            }
-            else{
-                item->next = NULL;
-                target->head = item;
-
-
-            }
-            return 0;
-        }
-        else {
-
-            return 1;
-
-        }
-    }
-    return 1;
-}
-
-
-void ex_stack_pop(stack_exp *target){
-    if(target){
-        if(target->head){
-
-            list_exp *succ = target->head->next;
-            free(target->head);
-            target->head = succ;
-
-        }
-
-    }
-
-
-}
-
-
-void repeted_pop(stack_exp* target, int times)
-{
-    for (int i = 0; i < times; i++)
-    {
-        ex_stack_pop(target);
-    }
-}
-
-
-list_exp* stack_top_terminal(stack_exp* target)
-{
-    for (list_exp* tmp = target->head; tmp != NULL; tmp = tmp->next)
-    {
-        if (tmp->symbol < STOP)
-            return tmp;
-    }
-
-    return NULL;
-}
-
-
-
-bool insert_after_top_terminal(stack_exp* target, symbol_enum symbol)
-{
-    list_exp* prev = NULL;
-
-    for (list_exp* tmp = target->head; tmp != NULL; tmp = tmp->next)
-    {
-        if (tmp->symbol < STOP)
+        if (tempo->symbol < STOP)
         {
-            list_exp* new_item = (list_exp*)malloc(sizeof(list_exp));
-
-            if (new_item == NULL)
-                return false;
-
+            expression_list* new_item = (expression_list*)malloc(sizeof(expression_list));
             new_item->symbol = symbol;
 
-
-            if (prev == NULL)
+            if (previous != NULL)
             {
-                new_item->next = target->head;
-                target->head = new_item;
+                new_item->next = previous->next;
+                previous->next = new_item;
             }
             else
             {
-                new_item->next = prev->next;
-                prev->next = new_item;
+                new_item->next = target->top;
+                target->top = new_item;
             }
-
             return true;
         }
-
-        prev = tmp;
+        previous = tempo;
     }
-
     return false;
 }
 
 
+/**
+ *
+ * @param target Pointer to stack.
+ * @return Head of stack.
+ */
+expression_list* expression_stack_top(expression_stack *target)
+{
+    return target->top;
+}
 
 
-void ex_stack_destroy(stack_exp *target){
-    if (target){
-        list_exp *tmp = target->head;
-        if(tmp){
-            list_exp *todelete = NULL;
-
-            while(tmp->next!= NULL){
-                todelete = tmp;
-                tmp = tmp->next;
-                free(todelete);
-            }
-            free(todelete);
-
-
-        }
-            free(target);
-
+/**
+ * Destroys stack.
+ * @param target Pointer to stack.
+ */
+void expression_stack_destroy(expression_stack *target)
+{
+    while(!expression_stack_empty(target))
+    {
+        expression_stack_pop(target);
     }
 }
 
-bool ex_stack_empty(stack_exp *target){
-    if(target){
-        if (target->head){
-            return false;
-        }
-    }
 
+/**
+ *
+ * @param target Pointer to stack.
+ * @return True if stack is empty, otherwise false.
+ */
+bool expression_stack_empty(expression_stack *target)
+{
+    if (target->top){
+        return false;
+    }
     return true;
 }

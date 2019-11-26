@@ -1,4 +1,7 @@
-
+/**
+ * @author Ondřej Andrla
+ * Year 2019
+ */
 
 #pragma once
 
@@ -8,34 +11,31 @@
 #include "symtable.h"
 #include "main.h"
 
-typedef struct list_ex{
+/**
+ * Structure list contains its type and pointer to successor.
+ */
+typedef struct list{
     symbol_enum symbol;
-    struct list_ex *next;
-}list_exp;
+    struct list *next;
+}expression_list;
+
+/**
+ * Structure representing stack.
+ * Top is pointer on list on head of stack.
+ */
+typedef struct stack{
+    expression_list *top;
+}expression_stack;
 
 
-typedef struct stack_ex{
-    list_exp *head;
-}stack_exp;
-
-
-stack_exp  *ex_stack_init();
-bool ex_stack_empty(stack_exp *target);
-
-
-void ex_stack_pop(stack_exp *target);
-
-int ex_stack_push(stack_exp *target,  symbol_enum data);
-
-void repeted_pop(stack_exp * target, int times);
-
-list_exp* stack_top_terminal(stack_exp* target);
-
-bool insert_after_top_terminal(stack_exp* target,  symbol_enum symbol);
-
-list_exp* ex_stack_top(stack_exp* target);
-
-void ex_stack_destroy(stack_exp *target);
+expression_stack *expression_stack_init();
+bool expression_stack_empty(expression_stack *target);
+void expression_stack_pop(expression_stack *target);
+void expression_stack_push(expression_stack *target, symbol_enum data);
+expression_list* stack_top_terminal(expression_stack* target);
+bool insert_after_top_terminal(expression_stack* target,  symbol_enum symbol);
+expression_list* expression_stack_top(expression_stack *target);
+void expression_stack_destroy(expression_stack *target);
 
 
 
