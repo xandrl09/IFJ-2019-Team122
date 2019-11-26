@@ -1,5 +1,5 @@
 /**
- * Project: Implementace překladače imperativního jazyka IFJ18.
+ * Project: Implementace překladače imperativního jazyka IFJ19.
  *
  * @brief Expression interface.
  *
@@ -18,16 +18,20 @@
 
 
 
+typedef enum
+{
+    I_REL_OP,			/// 0 r
+    I_PLUS_MINUS,		/// 1 +-
+    I_MUL_DIV,		    /// 2 */ //
+    I_LEFT_BRACKET,		/// 3 (
+    I_RIGHT_BRACKET,	/// 4 )
+    I_DATA,	            /// 5 i
+    I_DOLLAR			/// 6 $
+
+} Precedence_table_index_enum;
 
 
 
-
-/**
- * Implementation of <expression> rule. Parses expressions.
- *
- * @param data Pointer to parser's internal data.
- * @return Given exit code.
- */
 
 
 

@@ -13,8 +13,6 @@
 #include <stdio.h>
 
 #include "parser.h"
-//#include "lexan.h"
-
 
 #define GET_TOKEN()\
 if ((result = getParserToken(data->token)) != SCANNER_TOKEN_OK)\
@@ -29,21 +27,6 @@ if (data->token->type != (_type)) return SYNTAX_ERROR
 // jednotlive funkce odpovidajici jednotlivym nonterminalum gramatiky
 // ==================================================================
 
-static int main_body(MainData* data);
-static int main_func(MainData* data);
-static int def_func_params(MainData* data);
-static int func_param_x(MainData* data);
-static int main_(MainData* data);
-static int code(MainData* data);
-static int identif(MainData* data);
-static int ins(MainData* data);
-static int ins_id(MainData* data);
-static int call_func_params(MainData* data);
-static int call_func_param_x(MainData* data);
-static int inner_func(MainData* data);
-static int term(MainData* data);
-
-
 
 static int main_body(MainData* data)
 {
@@ -53,10 +36,9 @@ static int main_body(MainData* data)
     switch(data->token->type)
     {
         case T_DEF:
-            ///Pravidlo 1: def ID ( <func_params> ) EOL: INDENT <main_func> DEDENT <main_body>
+            ///Pravidlo 1: def ID ( <func_params> ) :EOL INDENT <main_func> DEDENT <main_body>
 
-            //data->op = new_operator(BEGIN_FUNCTION_DEFINITION);
-            //(data->prog, data->op);
+
             GET_TOKEN();
             CHECK_TYPE(T_ID);
 
@@ -73,8 +55,7 @@ static int main_body(MainData* data)
 //            {
 //                data->table->hash_arr = func_add(data->table, data->token->data->string);
 //
-//                //data->op = new_operand(data->table->sym);
-//                //append_op(data->prog, data->op);
+//
 //            }
 
             GET_TOKEN();
@@ -85,9 +66,11 @@ static int main_body(MainData* data)
             if (result != SYNTAX_OK) return result;
 
             GET_TOKEN();
-            CHECK_TYPE(T_EOL);
-            GET_TOKEN();
             CHECK_TYPE(T_COLON);
+            GET_TOKEN();
+            CHECK_TYPE(T_EOL);
+            gen_code_from_line(def_line);
+
             GET_TOKEN();
             CHECK_TYPE(T_INDENT);
 
@@ -98,8 +81,7 @@ static int main_body(MainData* data)
             data->in_function = false;
 
             CHECK_TYPE(T_DEDENT);
-            //data->op = new_operator(END);
-            //(data->prog, data->op);
+
 
             return main_body(data);
 
@@ -127,8 +109,6 @@ static int main_body(MainData* data)
 
         case T_EOF:
             // Pravidlo 3 <main_body> -> e
-           // data->op = new_operator(PROG_END);
-            //(data->prog, data->op);
             return SYNTAX_OK;
 
         default:
@@ -193,10 +173,6 @@ static int def_func_params(MainData* data)
 
             ///sem se dostaneme pouze pokud funkce nebyla definovana
 
-//            //data->table->sym = symtable_lookup_add(data->table->sym, data->token->data.string);	//získání adresy symbolu funkce?
-//            data->table->hash_arr = arg_add(data->table, data->func_id->data->string , data->token->data->string);
-//            //data->op = new_operand(data->table->sym);
-//           // append_op(data->prog, data->op);
 
             GET_TOKEN();
             result = func_param_x(data);
@@ -209,7 +185,6 @@ static int def_func_params(MainData* data)
             return SYNTAX_OK;
         default:
             return SYNTAX_ERROR;
-
     }
 }
 
@@ -229,9 +204,6 @@ static int func_param_x(MainData* data)
             ///sem se dostaneme pouze pokud funkce nebyla definovana
 
 //            // ULOŽENÍ PARAMETRU FUNKCE
-//            data->table->hash_arr = symtable_lookup_add(data->table, data->token->data->string);
-//            //data->op = new_operand(data->table->sym);
-//            //append_op(data->prog, data->op);
 
             return func_param_x(data);
 
@@ -312,30 +284,21 @@ static int code(MainData* data)
 
             ///samostatně stojící výraz
 
-            //data->op = new_operator(BEGIN_EXPR);
-            //(data->prog, data->op);
             i = expression(data);
             if(i != 0) return i;
-            //data->op = new_operator(END);
-            //(data->prog, data->op);
+
 
             CHECK_TYPE(T_EOL);
             return SYNTAX_OK;
 
         case T_IF:
-            // pravidlo 12: <code> -> if <expr> : EOL INDENT <main> DEDENT else : EOL INDENT <main> DEDENT  EOL
+            // pravidlo 12: <code> -> if <expr> : EOL INDENT <main> DEDENT else : EOL INDENT <main>  EOL DEDENT
 
-            //data->op = new_operator(BEGIN_IF);
-            //(data->prog, data->op);
 
             GET_TOKEN();
 
-            //data->op = new_operator(BEGIN_EXPR);
-            //(data->prog, data->op);
             i = expression(data);
             if(i != 0) return i;
-            //data->op = new_operator(END);
-            //(data->prog, data->op);
 
             CHECK_TYPE(T_COLON);
 
@@ -351,8 +314,6 @@ static int code(MainData* data)
 
             GET_TOKEN();
             CHECK_TYPE(T_ELSE);
-            //data->op = new_operator(ELSE);
-            //(data->prog, data->op);
 
             GET_TOKEN();
             CHECK_TYPE(T_COLON);
@@ -364,27 +325,18 @@ static int code(MainData* data)
             GET_TOKEN();
             result = main_(data);
             if (result != SYNTAX_OK) return result;
-            CHECK_TYPE(T_DEDENT);
-            //data->op = new_operator(END);
-            //(data->prog, data->op);
+            CHECK_TYPE(T_EOL);
 
             GET_TOKEN();
-            CHECK_TYPE(T_EOL);
+            CHECK_TYPE(T_DEDENT);
             return SYNTAX_OK;
 
         case T_WHILE:
-            // pravidlo 13: <code> -> while <expr> : EOL INDENT <main> DEDENT  EOL
-            //data->op = new_operator(BEGIN_WHILE);
-            //(data->prog, data->op);
-
+            // pravidlo 13: <code> -> while <expr> : EOL INDENT <main>   EOL DEDENT
             GET_TOKEN();
 
-            //data->op = new_operator(BEGIN_EXPR);
-            //(data->prog, data->op);
             i = expression(data);
             if(i != 0) return i;
-            //data->op = new_operator(END);
-            //(data->prog, data->op);
             CHECK_TYPE(T_COLON);
 
             GET_TOKEN();
@@ -395,13 +347,10 @@ static int code(MainData* data)
             GET_TOKEN();
             result = main_(data);
             if (result != SYNTAX_OK) return result;
-
-            CHECK_TYPE(T_DEDENT);
-            //data->op = new_operator(END);
-            //(data->prog, data->op);
+            CHECK_TYPE(T_EOL);
 
             GET_TOKEN();
-            CHECK_TYPE(T_EOL);
+            CHECK_TYPE(T_DEDENT);
             return SYNTAX_OK;
 
         case T_ID:
@@ -448,13 +397,10 @@ static int identif(MainData* data)
 
             ///SAMOSTATNĚ STOJÍCÍ VÝRAZ
 
-            //data->op = new_operator(BEGIN_EXPR);
-            //(data->prog, data->op);
 
             i = expression(data);
             if(i != 0) return i;
-            //data->op = new_operator(END);
-            //(data->prog, data->op);
+
             return SYNTAX_OK;
 
         case T_LBRACK:
@@ -540,13 +486,8 @@ static int ins(MainData* data)
         case T_STRING:
             // rule 18: <ins> -> EXPR EOL
 
-            //data->op = new_operator(BEGIN_EXPR);
-            //(data->prog, data->op);
             i = expression(data);
             if(i != 0) return i;
-            //data->op = new_operator(END);
-            //(data->prog, data->op);
-
             CHECK_TYPE(T_EOL);
 
             return SYNTAX_OK;
@@ -762,78 +703,52 @@ static int inner_func(MainData* data)
     {
         case T_INPUTS:
             // pravidlo 26: <inner_func> -> inputs ()
-            //data->op = new_operator(BEGIN_FUNCTION_CALL);
-            //(data->prog, data->op);
+
             GET_TOKEN();
             CHECK_TYPE(T_LBRACK);
             GET_TOKEN();
             CHECK_TYPE(T_RBRACK);
 
-            //data->op = new_operator(INPUTS);
-            //(data->prog, data->op);
-            //data->op = new_operator(END);
-            //(data->prog, data->op);
             return SYNTAX_OK;
 
         case T_INPUTI:
             // pravidlo 28: <inner_func> -> inputi ()
-            //data->op = new_operator(BEGIN_FUNCTION_CALL);
-            //(data->prog, data->op);
             GET_TOKEN();
             CHECK_TYPE(T_LBRACK);
             GET_TOKEN();
             CHECK_TYPE(T_RBRACK);
 
-            //data->op = new_operator(INPUTI);
-            //(data->prog, data->op);
-            //data->op = new_operator(END);
-            //(data->prog, data->op);
             return SYNTAX_OK;
 
         case T_INPUTF:
             // pravidlo 29: <inner_func> -> inputf ()
-            //data->op = new_operator(BEGIN_FUNCTION_CALL);
-            //(data->prog, data->op);
+
             GET_TOKEN();
             CHECK_TYPE(T_LBRACK);
             GET_TOKEN();
             CHECK_TYPE(T_RBRACK);
 
-            //data->op = new_operator(INPUTF);
-            //(data->prog, data->op);
-            //data->op = new_operator(END);
-            //(data->prog, data->op);
             return SYNTAX_OK;
 
 
         case T_PRINT:
             //pravidlo 30: <inner_func> -> print (STRING <term> )
 
-            //data->op = new_operator(BEGIN_FUNCTION_CALL);
-            //(data->prog, data->op);
 
             GET_TOKEN();
             CHECK_TYPE(T_LBRACK);
 
             GET_TOKEN();
             if (data->token->type == T_ID) {
-                // operand
-                //data->table->hash_arr = symtable_lookup_add(data->table, data->token->data->string);
-                // data->op = new_operand(data->table->sym);
-                //(data->prog, data->op);
+
 
                 GET_TOKEN();
                 result = term(data);
                 if (result != SYNTAX_OK) return result;
 
-                   // data->op = new_operator(PRINT);
-                    //(data->prog, data->op);
-                    //data->op = new_operator(END);
-                    //(data->prog, data->op);
 
             } else if (data->token->type == T_STRING || data->token->type == T_INT || data->token->type == T_FLOAT) {
-                // operand
-                // data->symb = new_symbol();
+
 //                if (data->token->type == T_STRING) {
 //                    data->symb->type = STRING;
 //                    data->symb->data->string = data->token->data->string;
@@ -845,16 +760,11 @@ static int inner_func(MainData* data)
 //                    data->symb->data->flp = data->token->data->u_double;
 //                }
 
-                //data->op = new_operand(data->symb);
-                //(data->prog, data->op);
+
                 GET_TOKEN();
                 result = term(data);
                 if (result != SYNTAX_OK) return result;
 
-                    //data->op = new_operator(PRINT);
-                    //(data->prog, data->op);
-                   // data->op = new_operator(END);
-                    //(data->prog, data->op);
 
             } else{
                 return SYNTAX_ERROR;
@@ -866,47 +776,25 @@ static int inner_func(MainData* data)
             GET_TOKEN();
             if (data->token->type != T_RBRACK) return SYNTAX_ERROR;
 
-                //data->op = new_operator(PRINT);
-                //(data->prog, data->op);
-                //data->op = new_operator(END);
-                //(data->prog, data->op);
             return SYNTAX_OK;
 
 
         case T_LENGTH:
             //pravidlo 31: <inner_func> -> length (STRING  )
 
-            //data->op = new_operator(BEGIN_FUNCTION_CALL);
-            //(data->prog, data->op);
             GET_TOKEN();
             CHECK_TYPE(T_LBRACK);
             GET_TOKEN();
             if (data->token->type == T_ID)
             {
-                //data->table->hash_arr = symtable_lookup_add(data->table, data->token->data->string);
-                //data->op = new_operand(data->table->sym);
-                //(data->prog, data->op);
 
-                //data->op = new_operator(LENGTH);
-                //(data->prog, data->op);
-                //data->op = new_operator(END);
-                //(data->prog, data->op);
                 GET_TOKEN();
                 CHECK_TYPE(T_RBRACK);
                 return SYNTAX_OK;
             }
             else if( data->token->type == T_STRING)
             {
-//                data->symb = new_symbol();
-//                data->symb->type = STRING;
-//                data->symb->data->string = data->token->data->string;
-                //data->op = new_operand(data->symb);
-                //(data->prog, data->op);
 
-                //data->op = new_operator(LENGTH);
-                //(data->prog, data->op);
-               // data->op = new_operator(END);
-                //(data->prog, data->op);
                 GET_TOKEN();
                 CHECK_TYPE(T_RBRACK);
                 return SYNTAX_OK;
@@ -916,8 +804,7 @@ static int inner_func(MainData* data)
         case T_SUBSTR:
             //pravidlo 32: <inner_func> -> substr (STRING, INT, INT )
 
-            //data->op = new_operator(BEGIN_FUNCTION_CALL);
-            //(data->prog, data->op);
+
             GET_TOKEN();
             CHECK_TYPE(T_LBRACK);
             GET_TOKEN();
@@ -925,17 +812,9 @@ static int inner_func(MainData* data)
             {
 //                if (data->token->type == T_ID)
 //                {
-//                    //data->table->hash_arr = symtable_lookup_add(data->table, data->token->data->string);
-//                    //data->op = new_operand(data->table->sym);
-//                    //(data->prog, data->op);
 //                }
 //                else
 //                {
-//                    //data->symb = new_symbol();
-//                    data->symb->type = STRING;
-//                    data->symb->data->string = data->token->data->string;
-//                    //data->op = new_operand(data->symb);
-//                    //(data->prog, data->op);
 //                }
 
                 GET_TOKEN();
@@ -943,17 +822,11 @@ static int inner_func(MainData* data)
                 GET_TOKEN();
                 if (data->token->type == T_ID)
                 {
-                   // data->table->hash_arr = symtable_lookup_add(data->table, data->token->data->string);
-                   // data->op = new_operand(data->table->sym);
-                    //(data->prog, data->op);
+
                 }
                 else if ( data->token->type == T_INT)
                 {
-                   // data->symb = new_symbol();
-//                    data->symb->type = INT;
-//                    data->symb->data->integer = data->token->data->u_int;
-                   // data->op = new_operand(data->symb);
-                    //(data->prog, data->op);
+
                 }
                 else return SYNTAX_ERROR;
 
@@ -963,24 +836,14 @@ static int inner_func(MainData* data)
 
                 if (data->token->type == T_ID)
                 {
-                    //data->table->hash_arr = symtable_lookup_add(data->table, data->token->data->string);
-                    //data->op = new_operand(data->table->sym);
-                    //(data->prog, data->op);
+
                 }
                 else if ( data->token->type == T_INT)
                 {
-                    //data->symb = new_symbol();
-//                    data->symb->type = INT;
-//                    data->symb->data->integer = data->token->data->u_int;
-                    //data->op = new_operand(data->symb);
-                    //(data->prog, data->op);
+
                 }
                 else return SYNTAX_ERROR;
 
-                //data->op = new_operator(SUBSTR);
-                //(data->prog, data->op);
-                //data->op = new_operator(END);
-                //(data->prog, data->op);
                 GET_TOKEN();
                 CHECK_TYPE(T_RBRACK);
                 return SYNTAX_OK;
@@ -990,8 +853,7 @@ static int inner_func(MainData* data)
         case T_ORD:
             //pravidlo 33: <inner_func> -> ord (STRING, INT )
 
-            //data->op = new_operator(BEGIN_FUNCTION_CALL);
-            //(data->prog, data->op);
+
             GET_TOKEN();
             CHECK_TYPE(T_LBRACK);
             GET_TOKEN();
@@ -999,17 +861,9 @@ static int inner_func(MainData* data)
             {
 //                if (data->token->type == T_ID)
 //                {
-//                  //  data->table->hash_arr = symtable_lookup_add(data->table, data->token->data->string);
-//                   // data->op = new_operand(data->table->sym);
-//                    //(data->prog, data->op);
 //                }
 //                else
 //                {
-//                    //data->symb = new_symbol();
-//                    data->symb->type = STRING;
-//                    data->symb->data->string = data->token->data->string;
-//                    //data->op = new_operand(data->symb);
-//                    //(data->prog, data->op);
 //                }
 
                 GET_TOKEN();
@@ -1018,24 +872,15 @@ static int inner_func(MainData* data)
 
                 if (data->token->type == T_ID)
                 {
-                 //   data->table->hash_arr = symtable_lookup_add(data->table, data->token->data->string);
-                   // data->op = new_operand(data->table->sym);
-                    //(data->prog, data->op);
+
                 }
                 else if ( data->token->type == T_INT)
                 {
-//                    data->symb = new_symbol();
-//                    data->symb->type = INT;
-//                    data->symb->data->integer = data->token->data->u_int;
-                    //data->op = new_operand(data->symb);
-                    //(data->prog, data->op);
+
                 }
                 else return SYNTAX_ERROR;
 
-                //data->op = new_operator(ORD);
-                //(data->prog, data->op);
-               // data->op = new_operator(END);
-                //(data->prog, data->op);
+
                 GET_TOKEN();
                 CHECK_TYPE(T_RBRACK);
                 return SYNTAX_OK;
@@ -1046,8 +891,7 @@ static int inner_func(MainData* data)
         case T_CHR:
             //pravidlo 34: <inner_func> -> chr (INT )
 
-            //data->op = new_operator(BEGIN_FUNCTION_CALL);
-            //(data->prog, data->op);
+
             GET_TOKEN();
             CHECK_TYPE(T_LBRACK);
             GET_TOKEN();
@@ -1055,23 +899,12 @@ static int inner_func(MainData* data)
             {
 //                if (data->token->type == T_ID)
 //                {
-//                    data->table->hash_arr = symtable_lookup_add(data->table, data->token->data->string);
-//                   // data->op = new_operand(data->table->sym);
-//                    //(data->prog, data->op);
+//
 //                }
 //                else
 //                {
-//                   // data->symb = new_symbol();
-//                    data->symb->type = INT;
-//                    data->symb->data->integer = data->token->data->u_int;
-//                    //data->op = new_operand(data->symb);
-//                    //(data->prog, data->op);
 //                }
 
-               // data->op = new_operator(CHR);
-                //(data->prog, data->op);
-                //data->op = new_operator(END);
-                //(data->prog, data->op);
                 GET_TOKEN();
                 CHECK_TYPE(T_RBRACK);
                 return SYNTAX_OK;
@@ -1093,10 +926,6 @@ static int term(MainData* data)
             // pravidlo 35: <term> -> "," STRING <term>
             GET_TOKEN();
             if (data->token->type == T_ID) {
-                // operand
-               // data->table->hash_arr = symtable_lookup_add(data->table, data->token->data->string);
-               // data->op = new_operand(data->table->sym);
-                //(data->prog, data->op);
 
             } else if (data->token->type == T_STRING || data->token->type == T_INT || data->token->type == T_FLOAT) {
                 // operand
@@ -1130,14 +959,6 @@ static int term(MainData* data)
 }
 
 
-//T_token *token_init ()
-//{
-//    struct T_token *token  = malloc(sizeof(T_token));
-//    token->data = malloc(sizeof(T_tokenData));
-//    return token;
-//}
-
-
 int parse()
 {
     int result;
@@ -1162,14 +983,6 @@ int parse()
             //(data)->number_of_params = 0;
 
 
-    //dyn_id string;
-    //if (!dyn_id_init()) return ERROR_INTERNAL;
-    //dyn_id_init();
-
-
-        result = main_body(data);
-
-   // dyn_id_destroy(&string);
- //1printf("%i",result);
+    result = main_body(data);
     return result;
 }

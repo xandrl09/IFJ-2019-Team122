@@ -12,27 +12,10 @@
 #include "main.h"
 
 
-
-
 #define FREE_RESOURCES_RETURN(_return)								\
-		ex_stack_destroy(stack);									\
+		expression_stack_destroy(stack);									\
 		return _return;												\
 
-
-
-
-typedef enum
-{
-    I_EQU_NEQU,
-    I_REL_OP,			/// 0 r
-    I_PLUS_MINUS,		/// 1 +-
-    I_MUL_DIV,		    /// 2 */ //
-    I_LEFT_BRACKET,		/// 3 (
-    I_RIGHT_BRACKET,	/// 4 )
-    I_DATA,	            /// 5 i
-    I_DOLLAR			/// 6 $
-
-} Precedence_table_index_enum;
 
 typedef enum
 {
@@ -43,13 +26,12 @@ typedef enum
 } Precedence_table_sign_enum;
 
 
-
 int precedence_table[7][7] =
         {
            //	  r |+- |*/ | ( | ) | i | $ |
                 { E , S , S , S , R , S , R }, /// r (realtion operators) ==!= <= < >= >
                 { R , R , S , S , R , S , R }, /// +-
-                { R , R , R , S , R , S , R }, /// */
+                { R , R , R , S , R , S , R }, /// */ //
                 { S , S , S , S , Q , S , E }, /// (
                 { R , R , R , E , R , E , R }, /// )
                 { R , R , R , E , R , E , R }, /// i (id, int, double, string)
@@ -87,6 +69,8 @@ static symbol_enum get_symbol_from_token(T_token* token)
                         return MUL_;
                 case T_DIV:
                         return DIV_;
+                case T_WH_N_DIV:
+                        return DIV_WH;
                 case T_LBRACK:
                         return LEFT_BRACKET_;
                 case T_RBRACK:
@@ -104,7 +88,7 @@ static symbol_enum get_symbol_from_token(T_token* token)
 				        return STRING_;
 				default:
 				        return DOLLAR;
-		                }
+		    }
         }
 }
 
@@ -120,33 +104,24 @@ static Precedence_table_index_enum get_precedence_table_index(symbol_enum symbol
         switch (symbol)
         {
                 case PLUS:
-                    return I_PLUS_MINUS;
                 case MINUS:
-                        return I_PLUS_MINUS;
+                    return I_PLUS_MINUS;
 
                 case MUL_:
-                    return I_MUL_DIV;
                 case DIV_:
-                        return I_MUL_DIV;
+                case DIV_WH:
+                    return I_MUL_DIV;
 
                 case EQ_:
                 case NEQ:
-                        return I_EQU_NEQU;
-
                 case LEQ:
-                    return I_REL_OP;
                 case LESS:
-                    return I_REL_OP;
                 case MEQ:
-                    return I_REL_OP;
                 case MORE:
-                        return I_REL_OP;
+                    return I_REL_OP;
 
                 case LEFT_BRACKET_:
                         return I_LEFT_BRACKET;
-
-                case RIGHT_BRACKET_:
-                        return I_RIGHT_BRACKET;
 
                 case ID:
                     return I_DATA;
@@ -155,10 +130,17 @@ static Precedence_table_index_enum get_precedence_table_index(symbol_enum symbol
                 case FLOAT_:
                     return I_DATA;
                 case STRING_:
-                        return I_DATA;
+                    return I_DATA;
 
                 default:
-                        return I_DOLLAR;
+                   if(symbol == RIGHT_BRACKET_)
+                   {
+                            return I_RIGHT_BRACKET;
+                   }
+                   else
+                   {
+                       return I_DOLLAR;
+                   }
         }
 }
 
@@ -169,27 +151,24 @@ static Precedence_table_index_enum get_precedence_table_index(symbol_enum symbol
  * @param stop_found Pointer to bool variable which will be changed to true if stop was found else to false.
  * @return Number of characters after stop symbol. Is valid only when stop_found was set to true.
  */
-static int num_of_symbols_after_stop(bool* stop_found, stack_exp *stack)
+static int num_of_symbols_before_stop(bool *stop_found, expression_stack *stack)
 {
-        list_exp* tmp = ex_stack_top(stack);
+        expression_list* temp = expression_stack_top(stack);
         int count = 0;
 
-        while (tmp != NULL)
+        while (true)
         {
-                if (tmp->symbol != STOP)
-                {
-                        *stop_found = false;
-                        count++;
-                }
-                else
-                {
-                        *stop_found = true;
-                        break;
-                }
-
-                tmp = tmp->next;
+            if (temp->symbol != STOP)
+            {
+                *stop_found = false;
+                count++;
+            }
+            else{
+                *stop_found = true;
+                break;
+            }
+            temp = temp->next;
         }
-
         return count;
 }
 
@@ -200,23 +179,22 @@ static int num_of_symbols_after_stop(bool* stop_found, stack_exp *stack)
  * @param num Number of valid symbols in parameter.
  * @return NOT_A_RULE if no rule is found or returns rule which is valid.
  */
-bool  test_rule(int num, list_exp* op1, list_exp* op2, list_exp* op3)
+bool  test_rule(int num, expression_list* op1, expression_list* op2, expression_list* op3)
 {
         switch (num)
         {
                 case 1:
                         /// rule E -> i
                         if (op1->symbol == ID || op1->symbol == INT_ || op1->symbol == FLOAT_ || op1->symbol == STRING_)
-				
-                                return true;
-
+                        {
+                            return true;
+                        }
                 return false;
 
                 case 3:
                         /// rule E -> (E)
                         if (op1->symbol == LEFT_BRACKET_ && op2->symbol == NON_TERM && op3->symbol == RIGHT_BRACKET_)
                                 return true;
-
                 if (op1->symbol == NON_TERM && op3->symbol == NON_TERM)
                 {
                         switch (op2->symbol)
@@ -238,11 +216,9 @@ bool  test_rule(int num, list_exp* op1, list_exp* op2, list_exp* op3)
                         }
                 }
                 return false;
-
                 default:
                         return false;
         }
-
 }
 
 
@@ -252,29 +228,29 @@ bool  test_rule(int num, list_exp* op1, list_exp* op2, list_exp* op3)
  * @param data Pointer to table.
  * @return Given exit code.
  */
-static int reduce( stack_exp *stack)
+static int reduce( expression_stack *stack)
 {
 
-        list_exp* op1 = NULL;
-        list_exp* op2 = NULL;
-        list_exp* op3 = NULL;
+        expression_list* op1 = NULL;
+        expression_list* op2 = NULL;
+        expression_list* op3 = NULL;
 
         bool rule;
         bool found = false;
 
-        int count = num_of_symbols_after_stop(&found, stack);
+        int count = num_of_symbols_before_stop(&found, stack);
 
 
         if (count == 1 && found)
         {
-                op1 = stack->head;
+                op1 = stack->top;
                 rule = test_rule(count, op1, NULL, NULL);
         }
         else if (count == 3 && found)
         {
-                op1 = stack->head->next->next;
-                op2 = stack->head->next;
-                op3 = stack->head;
+                op1 = stack->top->next->next;
+                op2 = stack->top->next;
+                op3 = stack->top;
                 rule = test_rule(count, op1, op2, op3);
         }
         else
@@ -286,8 +262,11 @@ static int reduce( stack_exp *stack)
         }
         else
         {
-                repeted_pop(stack, count + 1);
-                ex_stack_push(stack, NON_TERM);
+            for (int i = 0; i < count + 1; i++)
+            {
+                expression_stack_pop(stack);
+            }
+            expression_stack_push(stack, NON_TERM);
         }
 
         return SYNTAX_OK;
@@ -302,20 +281,13 @@ int expression(MainData* data)
         int result;
 
 	///initialization of stack and buffer
-        stack_exp *stack = ex_stack_init();
-        //inst_buffer *prog = init_inst_buffer();
+        expression_stack *stack = expression_stack_init();
 
 	/// end of stack
-        if (!ex_stack_push(stack, DOLLAR))
-        {
-                FREE_RESOURCES_RETURN(ERROR_INTERNAL)
-        }
-
-        //primitives *//op;
-    //STsymPtr *symb;
+        expression_stack_push(stack, DOLLAR);
 
 
-        list_exp* top_stack_terminal;
+        expression_list* top_stack_terminal;
         symbol_enum actual_symbol;
 
         bool success = false;
@@ -323,6 +295,7 @@ int expression(MainData* data)
         do
         {
 		/// control second and third token
+		/// control is because
             /// T_NONE is like NULL
                 if(data->third_token->type != T_NONE)
                 {
@@ -334,7 +307,8 @@ int expression(MainData* data)
                         actual_symbol = get_symbol_from_token(data->second_token);
                         data->second_token->type = T_NONE;
                 }
-                else{
+                else
+                {
                     actual_symbol = get_symbol_from_token(data->token);
                 }
 
@@ -344,7 +318,7 @@ int expression(MainData* data)
 
                 if (top_stack_terminal == NULL)
                 {
-                        FREE_RESOURCES_RETURN(ERROR_INTERNAL)
+                    FREE_RESOURCES_RETURN(ERROR_INTERNAL)
                 }
 
 		/// use of precedence table
@@ -352,77 +326,10 @@ int expression(MainData* data)
                 {
                 	///shift
                         case S:
-                                if (!insert_after_top_terminal(stack, STOP))
-                                {
-                                        FREE_RESOURCES_RETURN(ERROR_INTERNAL)
-                                }
+                                insert_after_top_terminal(stack, STOP);
 
-				/// append_op
                                 switch(actual_symbol){
-                                        case PLUS:
-                                                //op = new_operator(ADD);
-                                                
-                                            //(pro
-                                            // g, //op);
-                                        //break;
-
-                                        case MINUS:
-                                                //op = new_operator(SUB);
-                                        //(prog, //op);
-                                        //break;
-
-                                        case MUL_:
-                                                //op = new_operator(MUL);
-                                        //(prog, //op);
-                                       // break;
-
-                                        case DIV_:
-                                                //op = new_operator(DIV);
-                                        //(prog, //op);
-                                       // break;
-
-                                        case EQ_:
-                                                //op = new_operator(EQ);
-                                        //(prog, //op);
-                                        //break;
-
-                                        case NEQ:
-                                                //op = new_operator(NOT);
-                                        //(prog, //op);
-                                        //break;
-
-                                        case LEQ:
-                                                //op = new_operator(LT_OR_EQ);
-                                        //(prog, //op);
-                                       // break;
-
-                                        case LESS:
-                                                //op = new_operator(LT);
-                                        //(prog, //op);
-                                        //break;
-
-                                        case MEQ:
-                                                //op = new_operator(GT_OR_EQ);
-                                        //(prog, //op);
-                                        //break;
-
-                                        case MORE:
-                                                //op = new_operator(GT);
-                                        //(prog, //op);
-                                       // break;
-
-                                        case LEFT_BRACKET_:
-                                                //op = new_operator(LEFT_BRACKET);
-                                        //(prog, //op);
-                                        //break;
-
-                                        case RIGHT_BRACKET_:
-                                                //op = new_operator(RIGHT_BRACKET);
-                                        //(prog, //op);
-                                        break;
-                                        
-					///identificator
-                                        case ID:
+                                        case ID:///identificator
 //                                            if(data->third_token->type != T_NONE)
 //                                            {
 //                                                data->table->sym = symtable_lookup_add(&data->table, data->third_token->data->string);
@@ -435,17 +342,9 @@ int expression(MainData* data)
 //                                            {
 //                                                data->table->sym = symtable_lookup_add(&data->table, data->token->data->string);
 //                                            }
-//
-//                                        //op = new_operand(data->table.sym);
-//                                        //(prog, //op);
                                         break;
-                                        
-                                        /// integer
-                                        case INT_:
 
-//                                                symb = new_symbol();
-//                                        &symb->type = INT;
-//
+                                        case INT_:/// integer
 //		                                if(data->third_token->type != T_NONE)
 //		                                {
 //		                                        symb->data->integer = data->third_token.data->u_int;
@@ -459,12 +358,9 @@ int expression(MainData* data)
 //		                                        symb->data->integer = data->token->data->u_int;
 //		                                }
 //
-//                                        //op = new_operand(symb);
-//                                        //(prog, //op);
                                         break;
-                                        
-                                        ///float
-                                        case FLOAT_:
+
+                                        case FLOAT_:///float
 
 //                                                symb = new_symbol();
 //                                        symb->type = FLOAT;
@@ -482,16 +378,9 @@ int expression(MainData* data)
 //		                                        symb->data->flp = data->token->data->u_double;
 //		                                }
 //
-//                                        //op = new_operand(symb);
-//                                        //(prog, //op);
                                         break;
-                                        
-                                        //string
-                                        case STRING_:
 
-//                                            symb = new_symbol();
-//                                            symb->type = STRING;
-//
+                                        case STRING_:///string
 //		                                if(data->third_token->type != T_NONE)
 //		                                {
 //		                                        symb->data->string = data->third_token.data->string;
@@ -504,226 +393,57 @@ int expression(MainData* data)
 //		                                {
 //		                                        symb->data->string = data->token->data->string;
 //		                                }
-//
-//                                            //op = new_operand(symb);
-//                                            //(prog, //op);
-                                            break;
-
+                                        break;
                                         default:
-                                                break;
-
+                                            break;
                                 }
 
+                        expression_stack_push(stack, actual_symbol);/// push stack
 
-
-			/// if push stack error
-                        if(!ex_stack_push(stack, actual_symbol))
-                        {
-                                FREE_RESOURCES_RETURN(ERROR_INTERNAL)
-                        }
-
-			/// empty second and thirh token
+			            /// empty second and thirh token
                         if(data->third_token->type == T_NONE && data->second_token->type == T_NONE)
                         {
                             if ((result = getParserToken(data->token)))
                             {
-                                    FREE_RESOURCES_RETURN(result)
+                                FREE_RESOURCES_RETURN(result)
                             }
-
                         }
                         break;
 
 			/// equal
                         case Q:
-                                ex_stack_push(stack, actual_symbol);
-                                
-				// append_op
-                        switch(actual_symbol){
-                                case PLUS:
-                                        //op = new_operator(ADD);
-                                //(prog, //op);
-                                //break;
+                            expression_stack_push(stack, actual_symbol);
 
-                                case MINUS:
-                                        //op = new_operator(SUB);
-                                //(prog, //op);
-                                //break;
-
-                                case MUL_:
-                                        //op = new_operator(MUL);
-                                //(prog, //op);
-                               // break;
-
-                                case DIV_:
-                                        //op = new_operator(DIV);
-                                //(prog, //op);
-                               // break;
-
-                                case EQ_:
-                                        //op = new_operator(EQ);
-                                //(prog, //op);
-                               // break;
-
-                                case NEQ:
-                                        //op = new_operator(NOT);
-                                //(prog, //op);
-                                //break;
-
-                                case LEQ:
-                                        //op = new_operator(LT_OR_EQ);
-                                //(prog, //op);
-                               //break;
-
-                                case LESS:
-                                        //op = new_operator(LT);
-                                //(prog, //op);
-                                //break;
-
-                                case MEQ:
-                                        //op = new_operator(GT_OR_EQ);
-                                //(prog, //op);
-                                //break;
-
-                                case MORE:
-                                        //op = new_operator(GT);
-                                //(prog, //op);
-                                //break;
-
-                                case LEFT_BRACKET_:
-                                        //op = new_operator(LEFT_BRACKET);
-                                //(prog, //op);
-                                //break;
-
-                                case RIGHT_BRACKET_:
-                                        //op = new_operator(RIGHT_BRACKET);
-                                //(prog, //op);
-                                break;
-                                
-				/// identificator
-                                case ID:
-
-//                                        if(data->third_token->type != T_NONE)
-//                                        {
-//                                                data->table->sym = symtable_lookup_add(&data->table, data->third_token->data->string);
-//                                        }
-//                                        else if(data->second_token->type != T_NONE)
-//                                        {
-//                                                data->table->sym = symtable_lookup_add(&data->table, data->second_token->data->string);
-//                                        }
-//                                        else
-//                                        {
-//                                                data->table->sym = symtable_lookup_add(&data->table, data->token->data->string);
-//                                        }
-//
-//                                //op = new_operand(data->table.sym);
-//                                //(prog, //op);
-                                break;
-                                
-				/// integer
-                                case INT_:
-
-//                                        symb = new_symbol();
-//                                symb->type = INT;
-//
-//		                        if(data->third_token->type != T_NIL)
-//		                        {
-//		                                symb->data->integer = data->third_token->data->u_int;
-//		                        }
-//		                        else if(data->second_token->type != T_NIL)
-//		                        {
-//		                                symb->data->integer = data->second_token->data->u_int;
-//		                        }
-//		                        else
-//		                        {
-//		                                symb->data->integer = data->token->data->u_int;
-//		                        }
-//
-//                                //op = new_operand(symb);
-//                                //(prog, //op);
-                                break;
-
-				///float
-                                case FLOAT_:
-
-//                                        symb = new_symbol();
-//                                symb->type = FLOAT;
-//
-//		                        if(data->third_token->type != T_NONE)
-//		                        {
-//		                                symb->data->flp = data->third_token->data->u_double;
-//		                        }
-//		                        else if(data->second_token->type != T_NONE)
-//		                        {
-//		                                symb->data->flp = data->second_token->data->u_double;
-//		                        }
-//		                        else
-//		                        {
-//		                                symb->data->flp = data->token->data->u_double;
-//		                        }
-//
-//                                //op = new_operand(symb);
-//                                //(prog, //op);
-                                break;
-                                
-				///string
-                                case STRING_:
-
-//                                        symb = new_symbol();
-//                                symb->type = STRING;
-//
-//		                        if(data->third_token->type != T_NIL)
-//		                        {
-//		                                symb->data->string = data->third_token->data->string;
-//		                        }
-//		                        else if(data->second_token->type != T_NIL)
-//		                        {
-//		                                symb->data->string = data->second_token->data->string;
-//		                        }
-//		                        else
-//		                        {
-//		                                symb->data->string = data->token->data->string;
-//		                        }
-//
-//                                //op = new_operand(symb);
-//                                //(prog, //op);
-                                break;
-
-                                default:
-                                        break;
-
-                        }
-                        
-			/// empty second and thirh token
+                        /// empty second and thirh token
                         if(data->third_token->type == T_NONE && data->second_token->type == T_NONE)
                         {
-                            if ((result = getParserToken(data->token))){
+                            if ((result = getParserToken(data->token)))
+                            {
                                 FREE_RESOURCES_RETURN(result)
                             }
-
                         }
                         break;
+                                
 
 			/// reduce
                         case R:
                                 if ((result = reduce( stack)))
                                 {
-                                        FREE_RESOURCES_RETURN(result)
+                                    FREE_RESOURCES_RETURN(result)
                                 }
-
                         break;
 
 			/// error
                         case E:
-                        	// OK end
                                 if (actual_symbol == DOLLAR && top_stack_terminal->symbol == DOLLAR)
-                                        success = true;
+                                {
+                                    success = true;/// OK end
+                                }
                                 else
                                 {
-                                        FREE_RESOURCES_RETURN(SYNTAX_ERROR)
+                                    FREE_RESOURCES_RETURN(SYNTAX_ERROR)
                                 }
-
-                        break;
-
+                            break;
                         default:
                                 break;
                 }
@@ -731,18 +451,18 @@ int expression(MainData* data)
 
 
 	/// no end of stack
-        if (ex_stack_empty(stack) == true)
+        if (expression_stack_empty(stack) == true)
         {
-                FREE_RESOURCES_RETURN(ERROR_INTERNAL)
+            FREE_RESOURCES_RETURN(ERROR_INTERNAL)
         }
         
 	/// not reduced symbols
-        list_exp* final_non_terminal = ex_stack_top(stack);
+        expression_list* final_non_terminal = expression_stack_top(stack);
 
         if (final_non_terminal->symbol != NON_TERM)
         {
-                FREE_RESOURCES_RETURN(SYNTAX_ERROR)
+            FREE_RESOURCES_RETURN(SYNTAX_ERROR)
         }
 
-        FREE_RESOURCES_RETURN(SYNTAX_OK)
+    FREE_RESOURCES_RETURN(SYNTAX_OK)
 }

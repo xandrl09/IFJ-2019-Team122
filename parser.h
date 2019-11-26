@@ -45,3 +45,17 @@ typedef struct
 
 int parse();
 int expression(MainData* data);
+
+static int main_body(MainData* data);
+static int main_func(MainData* data);
+static int def_func_params(MainData* data);
+static int func_param_x(MainData* data);
+static int main_(MainData* data);
+static int code(MainData* data);
+static int identif(MainData* data);
+static int ins(MainData* data);
+static int ins_id(MainData* data);
+static int call_func_params(MainData* data);
+static int call_func_param_x(MainData* data);
+static int inner_func(MainData* data);
+static int term(MainData* data);
