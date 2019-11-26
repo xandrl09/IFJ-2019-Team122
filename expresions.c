@@ -45,9 +45,9 @@ int precedence_table[7][7] =
  * @param token Pointer to token.
  * @return Returns dollar if symbol is not supported or converted symbol if symbol is supported.
  */
-static symbol_enum get_symbol_from_token(T_token* token)
+static symbol_enum get_symbol_from_token(T_token token)
 {
-        switch (token->type)
+        switch (token.type)
         {
                 case T_EQ_COMP:
                         return EQ_;
@@ -76,7 +76,7 @@ static symbol_enum get_symbol_from_token(T_token* token)
                 case T_RBRACK:
                         return RIGHT_BRACKET_;
 		default:
-			switch(token->type)
+			switch(token.type)
 			{
 				case T_ID:
 				        return ID;
@@ -297,15 +297,15 @@ int expression(MainData* data)
 		/// control second and third token
 		/// control is because
             /// T_NONE is like NULL
-                if(data->third_token->type != T_NONE)
+                if(data->third_token.type != T_NONE)
                 {
                         actual_symbol = get_symbol_from_token(data->third_token);
-                        data->third_token->type = T_NONE;
+                        data->third_token.type = T_NONE;
                 }
-                else if(data->second_token->type != T_NONE)
+                else if(data->second_token.type != T_NONE)
                 {
                         actual_symbol = get_symbol_from_token(data->second_token);
-                        data->second_token->type = T_NONE;
+                        data->second_token.type = T_NONE;
                 }
                 else
                 {
@@ -401,9 +401,9 @@ int expression(MainData* data)
                         expression_stack_push(stack, actual_symbol);/// push stack
 
 			            /// empty second and thirh token
-                        if(data->third_token->type == T_NONE && data->second_token->type == T_NONE)
+                        if(data->third_token.type == T_NONE && data->second_token.type == T_NONE)
                         {
-                            if ((result = getParserToken(data->token)))
+                            if ((result = getParserToken(&data->token)))
                             {
                                 FREE_RESOURCES_RETURN(result)
                             }
@@ -415,9 +415,9 @@ int expression(MainData* data)
                             expression_stack_push(stack, actual_symbol);
 
                         /// empty second and thirh token
-                        if(data->third_token->type == T_NONE && data->second_token->type == T_NONE)
+                        if(data->third_token.type == T_NONE && data->second_token.type == T_NONE)
                         {
-                            if ((result = getParserToken(data->token)))
+                            if ((result = getParserToken(&data->token)))
                             {
                                 FREE_RESOURCES_RETURN(result)
                             }

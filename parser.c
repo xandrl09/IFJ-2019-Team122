@@ -15,11 +15,11 @@
 #include "parser.h"
 
 #define GET_TOKEN()\
-if ((result = getParserToken(data->token)) != SCANNER_TOKEN_OK)\
+if ((result = getParserToken(&data->token)) != SCANNER_TOKEN_OK)\
 return result
 
 #define CHECK_TYPE(_type)											\
-if (data->token->type != (_type)) return SYNTAX_ERROR
+if (data->token.type != (_type)) return SYNTAX_ERROR
 
 
 
@@ -33,7 +33,7 @@ static int main_body(MainData* data)
     int result;
     GET_TOKEN();
 
-    switch(data->token->type)
+    switch(data->token.type)
     {
         case T_DEF:
             ///Pravidlo 1: def ID ( <func_params> ) :EOL INDENT <main_func> DEDENT <main_body>
@@ -42,7 +42,7 @@ static int main_body(MainData* data)
             GET_TOKEN();
             CHECK_TYPE(T_ID);
 
-            data->func_id = data->token;
+
 
 //            // TODO ZKONTROLOVAT
 //            /// pokud již byla funkce definována
@@ -122,7 +122,7 @@ static int main_func(MainData* data)
     int result;
     int i;
 
-    switch (data->token->type)
+    switch (data->token.type)
     {
         case T_IF:
         case T_WHILE:
@@ -166,7 +166,7 @@ static int def_func_params(MainData* data)
 {
     int result;
 
-    switch (data->token->type)
+    switch (data->token.type)
     {
         case T_ID:
             // pravidlo 4: <def_func_params> -> "ID" <func_param_x>
@@ -193,7 +193,7 @@ static int func_param_x(MainData* data)
 {
     int result;
 
-    switch (data->token->type)
+    switch (data->token.type)
     {
         case T_COMMA:
             // pravidlo 6: <func_param_x> -> "," "ID" <func_param_x>
@@ -220,7 +220,7 @@ static int main_(MainData* data)
 {
     int result;
 
-    switch (data->token->type)
+    switch (data->token.type)
     {
         case T_IF:
         case T_WHILE:
@@ -259,7 +259,7 @@ static int code(MainData* data)
     int result;
     int i;
 
-    switch (data->token->type)
+    switch (data->token.type)
     {
         case T_INPUTS:
         case T_INPUTI:
@@ -379,7 +379,7 @@ static int identif(MainData* data)
     int result;
     int i;
 
-    switch (data->token->type)
+    switch (data->token.type)
     {
         case T_EQ_COMP:
         case T_NEQ:
@@ -479,7 +479,7 @@ static int ins(MainData* data)
     int result;
     int i;
 
-    switch (data->token->type)
+    switch (data->token.type)
     {
         case T_INT:
         case T_FLOAT:
@@ -509,14 +509,14 @@ static int ins_id(MainData* data)
 {
     int result;
 
-    switch (data->token->type)
+    switch (data->token.type)
     {
         case T_LBRACK:
             // rule 20: <ins_id> -> <call_func_params> EOL
 
             ///second_token = function ID
-            data->func_id = data->second_token;
-            data->second_token->type = T_NONE;
+//            data->func_id = data->second_token;
+//            data->second_token->type = T_NONE;
 
 
             /// ID je v symtable
@@ -549,7 +549,7 @@ static int ins_id(MainData* data)
 //                }
 //            }
 
-            if(data->token->type == T_ID)
+            if(data->token.type == T_ID)
             {
                 /// kontrola zda je parametr v parametrech funkce
 //                 if(arg_search(data->table, data->func_id->data->string, data->token->data->string) == false)return SEM_ERR_WRONG_FUNC_PARAMS ;
@@ -612,7 +612,7 @@ static int call_func_params(MainData* data)
 {
     int result;
 
-    switch (data->token->type)
+    switch (data->token.type)
     {
         case T_ID:
             // pravidlo 22: <call_func_params> ->  ID <call_func_param_x>
@@ -669,7 +669,7 @@ static int call_func_param_x(MainData* data)
 {
     int result;
 
-    switch (data->token->type)
+    switch (data->token.type)
     {
         case T_COMMA:
             /// pravidlo 24: <call_func_param_x> -> , ID <call_func_param_x>
@@ -699,7 +699,7 @@ static int inner_func(MainData* data)
 {
     int result;
 
-    switch (data->token->type)
+    switch (data->token.type)
     {
         case T_INPUTS:
             // pravidlo 26: <inner_func> -> inputs ()
@@ -739,7 +739,7 @@ static int inner_func(MainData* data)
             CHECK_TYPE(T_LBRACK);
 
             GET_TOKEN();
-            if (data->token->type == T_ID) {
+            if (data->token.type == T_ID) {
 
 
                 GET_TOKEN();
@@ -747,7 +747,7 @@ static int inner_func(MainData* data)
                 if (result != SYNTAX_OK) return result;
 
 
-            } else if (data->token->type == T_STRING || data->token->type == T_INT || data->token->type == T_FLOAT) {
+            } else if (data->token.type == T_STRING || data->token.type == T_INT || data->token.type == T_FLOAT) {
 
 //                if (data->token->type == T_STRING) {
 //                    data->symb->type = STRING;
@@ -774,7 +774,7 @@ static int inner_func(MainData* data)
             if (result != SYNTAX_OK) return result;
 
             GET_TOKEN();
-            if (data->token->type != T_RBRACK) return SYNTAX_ERROR;
+            if (data->token.type != T_RBRACK) return SYNTAX_ERROR;
 
             return SYNTAX_OK;
 
@@ -785,14 +785,14 @@ static int inner_func(MainData* data)
             GET_TOKEN();
             CHECK_TYPE(T_LBRACK);
             GET_TOKEN();
-            if (data->token->type == T_ID)
+            if (data->token.type == T_ID)
             {
 
                 GET_TOKEN();
                 CHECK_TYPE(T_RBRACK);
                 return SYNTAX_OK;
             }
-            else if( data->token->type == T_STRING)
+            else if( data->token.type == T_STRING)
             {
 
                 GET_TOKEN();
@@ -808,7 +808,7 @@ static int inner_func(MainData* data)
             GET_TOKEN();
             CHECK_TYPE(T_LBRACK);
             GET_TOKEN();
-            if (data->token->type == T_ID || data->token->type == T_STRING)
+            if (data->token.type == T_ID || data->token.type == T_STRING)
             {
 //                if (data->token->type == T_ID)
 //                {
@@ -820,11 +820,11 @@ static int inner_func(MainData* data)
                 GET_TOKEN();
                 CHECK_TYPE(T_COMMA);
                 GET_TOKEN();
-                if (data->token->type == T_ID)
+                if (data->token.type == T_ID)
                 {
 
                 }
-                else if ( data->token->type == T_INT)
+                else if ( data->token.type == T_INT)
                 {
 
                 }
@@ -834,11 +834,11 @@ static int inner_func(MainData* data)
                 CHECK_TYPE(T_COMMA);
                 GET_TOKEN();
 
-                if (data->token->type == T_ID)
+                if (data->token.type == T_ID)
                 {
 
                 }
-                else if ( data->token->type == T_INT)
+                else if ( data->token.type == T_INT)
                 {
 
                 }
@@ -857,7 +857,7 @@ static int inner_func(MainData* data)
             GET_TOKEN();
             CHECK_TYPE(T_LBRACK);
             GET_TOKEN();
-            if (data->token->type == T_ID || data->token->type == T_STRING)
+            if (data->token.type == T_ID || data->token.type == T_STRING)
             {
 //                if (data->token->type == T_ID)
 //                {
@@ -870,11 +870,11 @@ static int inner_func(MainData* data)
                 CHECK_TYPE(T_COMMA);
                 GET_TOKEN();
 
-                if (data->token->type == T_ID)
+                if (data->token.type == T_ID)
                 {
 
                 }
-                else if ( data->token->type == T_INT)
+                else if ( data->token.type == T_INT)
                 {
 
                 }
@@ -895,7 +895,7 @@ static int inner_func(MainData* data)
             GET_TOKEN();
             CHECK_TYPE(T_LBRACK);
             GET_TOKEN();
-            if (data->token->type == T_ID || data->token->type == T_INT)
+            if (data->token.type == T_ID || data->token.type == T_INT)
             {
 //                if (data->token->type == T_ID)
 //                {
@@ -920,14 +920,14 @@ static int term(MainData* data)
 {
     int result;
 
-    switch (data->token->type)
+    switch (data->token.type)
     {
         case T_COMMA:
             // pravidlo 35: <term> -> "," STRING <term>
             GET_TOKEN();
-            if (data->token->type == T_ID) {
+            if (data->token.type == T_ID) {
 
-            } else if (data->token->type == T_STRING || data->token->type == T_INT || data->token->type == T_FLOAT) {
+            } else if (data->token.type == T_STRING || data->token.type == T_INT || data->token.type == T_FLOAT) {
                 // operand
                // data->symb = new_symbol();
 
@@ -968,13 +968,13 @@ int parse()
         data = malloc(sizeof(MainData));
 
 
-            (data)->token = token_init();
+            data->token = token_init();
             //(data)->token->data->string == dyn_id_init() ;
             (data)->second_token = token_init();
     //(data)->second_token->data->string == dyn_id_init() ;
             (data)->third_token = token_init();
 
-            (data)->func_id = token_init();
+            //(data)->func_id = token_init();
             //(data)->result = token_init();
             (data)->table = init_table(1); // FIXME
             (data)->symb = NULL;

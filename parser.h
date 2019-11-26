@@ -27,11 +27,11 @@ typedef struct
 
     STmaintablePtr table; /// CHECK
 
-    T_token *token;
-    T_token *second_token;
-    T_token *third_token;
+    T_token token;
+    T_token second_token;
+    T_token third_token;
 
-    T_token *func_id;
+    T_token func_id;
 
     char* str;
 
