@@ -7,13 +7,14 @@
 #include "symtable.h"
 #include "stack.h"
 #include "parser.h"
+#include "generator.h"
+#include "stack_cd.h"
 
 STmaintablePtr globalSymTable;
-extern Stack indentationStack;
 tDLList *tokenQueue;
 
-void evaluateInput(int argc)	{
-    if (argc != 2)	{
+void evaluateInput(int param)	{
+    if (param != 2)	{
         fprintf(stderr, "Progam failed during the evaluateInput func\n");
         	exit(1);
     }
@@ -24,20 +25,13 @@ int main(int argc, char* argv[])	{
     //evaluateInput(argc);
     createScanner(argv[1]);			//argv[1] == path
     DLInitList(tokenQueue);
-    //indentationStack = initStack();
     globalSymTable = init_table(10);
 
-    // this is how you get a token from scanner ready to be parsed
-//    T_token *token;
-//    token = token_init(token);
-//    getParserToken(token);
+//    gen_init();1
+//    getLineOfTokens(tokenQueue);  // calling scanner
+//    gen_code_from_line(def_line); // calling generator
 
-    parse();
-    parse();
-    parse();
-    parse();
-    parse();
-    printQueueContents(tokenQueue);
+
     table_delete(&globalSymTable);
     DLDisposeList(tokenQueue);
     return 0;

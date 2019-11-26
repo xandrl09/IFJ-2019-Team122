@@ -6,6 +6,8 @@
  *
  */
 
+// TODO - escape sekvence nejsou updatovane pro soucasny struct Token
+
 
 
 #include <stdlib.h>
@@ -34,6 +36,7 @@ int createScanner(char *path) {
         fprintf(stderr, "File cannot be opened!\n");
         return -1;
     }
+    indentationStack = initStack();
     return 0;
 }
 
@@ -73,8 +76,8 @@ void assignTokenData(T_token *out_token, Token in_token) {
         case floatingPoint:
             out_token->data->u_double = atol(in_token.value);
             break;
-        //default:
-            //out_token->data->string = in_token.value;
+        default:
+            out_token->data->string = in_token.value;
     }
 }
 
@@ -635,7 +638,12 @@ void getLineOfTokens(tDLList *tokenQueue) {
                     currentState = STATE_EXP_NUM;
                 } else if (isDelimiter(receivedChar)) {
                     saveTokenAndReset(tokenQueue, integer, buffer, &currentState, positionInLine++);
-                } else if (!isDigit(receivedChar)) {
+                }
+                else if (isSpecialChar(receivedChar)) {
+                    returnLastCharToInput(buffer, receivedChar);
+                    saveTokenAndReset(tokenQueue, integer, buffer, &currentState, positionInLine++);
+                }
+                else if (!isDigit(receivedChar)) {
                     currentState = STATE_ERROR;
                 }
                 break;
@@ -713,6 +721,11 @@ void getLineOfTokens(tDLList *tokenQueue) {
                 }
             case STATE_STRING:  // state for string
                 if ((receivedChar == '\'') && (previousChar != '\\')) {
+                    for(int i = 0; i < strlen(buffer); i++) {
+                        buffer[i] = buffer[i+1];
+                        if (buffer[i] == '\0')
+                            buffer[i - 1] = '\0';
+                    }
                     saveTokenAndReset(tokenQueue, string, buffer, &currentState, positionInLine++);
                 }
                 if (previousChar == '\\') {       // in case there's escape sequence

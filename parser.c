@@ -8,7 +8,7 @@
  * @author Ondřej Andrla <xandrl09@stud.fit.vutbr.cz>
  */
 
-#pragma once
+//#pragma once
 
 #include <stdio.h>
 
@@ -968,11 +968,11 @@ int parse()
         data = malloc(sizeof(MainData));
 
 
-            data->token = token_init();
+            data->token = *token_init();
             //(data)->token->data->string == dyn_id_init() ;
-            (data)->second_token = token_init();
+            (data)->second_token = *token_init();
     //(data)->second_token->data->string == dyn_id_init() ;
-            (data)->third_token = token_init();
+            (data)->third_token = *token_init();
 
             //(data)->func_id = token_init();
             //(data)->result = token_init();

@@ -15,7 +15,7 @@ typedef enum symbol_enum
     MUL_,			/// *
     DIV_,			/// /
     DIV_WH,         /// //
-    EQ_,				/// =
+    EQ_,			/// =
     NEQ,			/// <>
     LEQ,			/// <=
     LESS,			/// <

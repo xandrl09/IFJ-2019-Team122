@@ -178,6 +178,7 @@ char* getTokenTypeStringValue(tokenType type) {
         case docString: return "docString";
         case builtInFunc: return "builtInFunc";
         case EoF: return "EOF";
+        case nil: return "nil";
     }
     return "";
 }

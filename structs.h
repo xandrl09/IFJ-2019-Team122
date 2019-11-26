@@ -6,7 +6,7 @@
 
 typedef enum tokenTypes {
     error, keyword, identifier, integer, floatingPoint, builtInFunc,
-    Operator, string, specialChar, INDENT, DEDENT, EOL, EoF, docString
+    Operator, string, specialChar, INDENT, DEDENT, EOL, EoF, docString, nil
 } tokenType;
 
 typedef struct Token {
@@ -33,5 +33,11 @@ typedef struct TStack   {
     int top;
     Token* arr[255];
 } TStack;
+
+// Stack used to track lines of code to be printed
+typedef struct CDStack  {
+    int top;
+    char* arr[255];
+} CDStack;
 
 #endif
