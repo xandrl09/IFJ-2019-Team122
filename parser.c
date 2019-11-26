@@ -69,7 +69,7 @@ static int main_body(MainData* data)
             CHECK_TYPE(T_COLON);
             GET_TOKEN();
             CHECK_TYPE(T_EOL);
-            gen_code_from_line(def_line);
+            //gen_code_from_line(def_line);
 
             GET_TOKEN();
             CHECK_TYPE(T_INDENT);
