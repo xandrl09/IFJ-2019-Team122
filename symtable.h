@@ -44,29 +44,60 @@ typedef struct symtable {
 	unsigned int count;
 } symtable;
 
-void init_symtable();
-void init_next_scope();
+/*
+ * Inicializační funkce
+ */
 void init_stack();
-void stack_destroy();
-void TS_push(symtable *table);
-void TS_pop();
+void init_symtable();
 symtable* symtable_init(int size);
-void symtable_delete(symtable *target);
+symbol *init_symbol();
 symbol* create_symbol_int(char* identifier, char* value);
 symbol* create_symbol_float(char* identifier, char* value);
 symbol* create_symbol_function(char* identifier);
 symbol* create_symbol_string(char* identifier, char* value);
 symbol* create_symbol_nil(char* identifier);
-void insert_symbol(symtable *table, symbol *sym);
-void create_insert_symbol(char *identifier,ST_type type, char *value);
-void insert_param(char* dest, char* name, ST_type type);
+void init_param(symbol *symbol);
+
+/*
+ * Práce se stackem tabulek
+ */
+void push_lower_scope();
+void TS_push(symtable *table);
+void TS_pop();
+void stack_destroy();
+bool is_in_stack(char *identifier);
+symbol *search_stack(char* identifier);
+
+/*
+ * Práce s tabulkou symbolů
+ */
+void symtable_resize(symtable *table);
+void symtable_delete(symtable *target);
 bool is_in_table(symtable *table, char* identifier);
 symbol *search_sym(symtable *table, char* identifier);
-symbol *search_stack(char* identifier);
-symbol *new_symbol();
-parameter *new_param();
-void init_param(symbol *symbol);
-void symbols_destroy(symtable *table);
+
+/*
+ * Práce se symboly
+ */
+void insert_symbol(symtable *table, symbol *sym);
+void create_insert_symbol(char *identifier,ST_type type, char *value);
 void symbol_delete(symtable *table, char* identifier);
+void symbols_destroy(symtable *table);
+
+/*
+ * Práce s parametry
+ */
+parameter *new_param();
+void insert_param(char* dest, char* name, ST_type type);
+bool is_param_of(char* identifier, char *function);
+void params_destroy(symbol *symbol);
+
+/*
+ * Hashovací funkce
+ */
 unsigned int hash_function(char* target, unsigned int size, unsigned int seed);
+
+/*
+ * Vytiskne stack a jeho obsah
+ */
 void print_stack();
