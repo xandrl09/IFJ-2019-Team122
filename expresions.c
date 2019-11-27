@@ -12,11 +12,6 @@
 #include "main.h"
 
 
-#define FREE_RESOURCES_RETURN(_return)								\
-		expression_stack_destroy(stack);									\
-		return _return;												\
-
-
 typedef enum
 {
     S,    /// < SHIFT
@@ -45,9 +40,9 @@ int precedence_table[7][7] =
  * @param token Pointer to token.
  * @return Returns dollar if symbol is not supported or converted symbol if symbol is supported.
  */
-static symbol_enum get_symbol_from_token(T_token token)
+static symbol_enum get_symbol_from_token(T_token *token)
 {
-        switch (token.type)
+        switch (token->type)
         {
                 case T_EQ_COMP:
                         return EQ_;
@@ -76,7 +71,7 @@ static symbol_enum get_symbol_from_token(T_token token)
                 case T_RBRACK:
                         return RIGHT_BRACKET_;
 		default:
-			switch(token.type)
+			switch(token->type)
 			{
 				case T_ID:
 				        return ID;
@@ -222,6 +217,149 @@ bool  test_rule(int num, expression_list* op1, expression_list* op2, expression_
 }
 
 
+//static int check_semantics(Prec_rules_enum rule, Symbol_stack_item* op1, Symbol_stack_item* op2, Symbol_stack_item* op3, Data_type* final_type)
+//{
+//    bool retype_op1_to_double = false;
+//    bool retype_op3_to_double = false;
+//    bool retype_op1_to_integer = false;
+//    bool retype_op3_to_integer = false;
+//
+//    if (rule == OPERAND)
+//    {
+//        if (op1->data_type == TYPE_UNDEFINED)
+//            return SEM_ERR_UNDEFINED_VAR;
+//
+//        if (op1->data_type == TYPE_BOOL)
+//            return SEM_ERR_TYPE_COMPAT;
+//    }
+//
+//    if (rule == LBR_NT_RBR)
+//    {
+//        if (op2->data_type == TYPE_UNDEFINED)
+//            return SEM_ERR_UNDEFINED_VAR;
+//    }
+//
+//    if (rule != OPERAND && rule != LBR_NT_RBR)
+//    {
+//        if (op1->data_type == TYPE_UNDEFINED || op3->data_type == TYPE_UNDEFINED)
+//            return SEM_ERR_UNDEFINED_VAR;
+//
+//        if (op1->data_type == TYPE_BOOL || op3->data_type == TYPE_BOOL)
+//            return SEM_ERR_TYPE_COMPAT;
+//    }
+//
+//    switch (rule)
+//    {
+//        case OPERAND:
+//            *final_type = op1->data_type;
+//            break;
+//
+//        case LBR_NT_RBR:
+//            *final_type = op2->data_type;
+//            break;
+//
+//        case NT_PLUS_NT:
+//        case NT_MINUS_NT:
+//        case NT_MUL_NT:
+//            if (op1->data_type == TYPE_STRING && op3->data_type == TYPE_STRING && rule == NT_PLUS_NT)
+//            {
+//                *final_type = TYPE_STRING;
+//                break;
+//            }
+//
+//            if (op1->data_type == TYPE_INT && op3->data_type == TYPE_INT)
+//            {
+//                *final_type = TYPE_INT;
+//                break;
+//            }
+//
+//            if (op1->data_type == TYPE_STRING || op3->data_type == TYPE_STRING)
+//                return SEM_ERR_TYPE_COMPAT;
+//
+//            *final_type = TYPE_DOUBLE;
+//
+//            if (op1->data_type == TYPE_INT)
+//                retype_op1_to_double = true;
+//
+//            if (op3->data_type == TYPE_INT)
+//                retype_op3_to_double = true;
+//
+//            break;
+//
+//        case NT_DIV_NT:
+//            *final_type = TYPE_DOUBLE;
+//
+//            if (op1->data_type == TYPE_STRING || op3->data_type == TYPE_STRING)
+//                return SEM_ERR_TYPE_COMPAT;
+//
+//            if (op1->data_type == TYPE_INT)
+//                retype_op1_to_double = true;
+//
+//            if (op3->data_type == TYPE_INT)
+//                retype_op3_to_double = true;
+//
+//            break;
+//
+//        case NT_IDIV_NT:
+//            *final_type = TYPE_INT;
+//
+//            if (op1->data_type == TYPE_STRING || op3->data_type == TYPE_STRING)
+//                return SEM_ERR_TYPE_COMPAT;
+//
+//            if (op1->data_type == TYPE_DOUBLE)
+//                retype_op1_to_integer = true;
+//
+//            if (op3->data_type == TYPE_DOUBLE)
+//                retype_op3_to_integer = true;
+//
+//            break;
+//
+//        case NT_EQ_NT:
+//        case NT_NEQ_NT:
+//        case NT_LEQ_NT:
+//        case NT_LTN_NT:
+//        case NT_MEQ_NT:
+//        case NT_MTN_NT:
+//            *final_type = TYPE_BOOL;
+//
+//            if (op1->data_type == TYPE_INT && op3->data_type == TYPE_DOUBLE)
+//                retype_op1_to_double = true;
+//
+//            else if (op1->data_type == TYPE_DOUBLE && op3->data_type == TYPE_INT)
+//                retype_op3_to_double = true;
+//
+//            else if (op1->data_type != op3->data_type)
+//                return SEM_ERR_TYPE_COMPAT;
+//
+//            break;
+//
+//        default:
+//            break;
+//    }
+//
+//    if (retype_op1_to_double)
+//    {
+//        //GENERATE_CODE(generate_stack_op2_to_double);
+//    }
+//
+//    if (retype_op3_to_double)
+//    {
+//        //GENERATE_CODE(generate_stack_op1_to_double);
+//    }
+//
+//    if (retype_op1_to_integer)
+//    {
+//        //GENERATE_CODE(generate_stack_op2_to_integer);
+//    }
+//
+//    if (retype_op3_to_integer)
+//    {
+//        //GENERATE_CODE(generate_stack_op1_to_integer);
+//    }
+//
+//    return SYNTAX_OK;
+//}
+
 /**
  * Function reduces symbols after STOP symbol if rule for reducing is found.
  *
@@ -254,11 +392,18 @@ static int reduce( expression_stack *stack)
                 rule = test_rule(count, op1, op2, op3);
         }
         else
-                return SYNTAX_ERROR;
+        {
+            expression_stack_destroy(stack);
+            errSyn();
+            return SYNTAX_ERROR;
+        }
+
 
         if (!rule)/// rule == false
         {
-                return SYNTAX_ERROR;
+            expression_stack_destroy(stack);
+            errSyn();
+            return SYNTAX_ERROR;
         }
         else
         {
@@ -278,7 +423,6 @@ static int reduce( expression_stack *stack)
 
 int expression(MainData* data)
 {
-        int result;
 
 	///initialization of stack and buffer
         expression_stack *stack = expression_stack_init();
@@ -299,17 +443,17 @@ int expression(MainData* data)
             /// T_NONE is like NULL
                 if(data->third_token.type != T_NONE)
                 {
-                        actual_symbol = get_symbol_from_token(data->third_token);
+                        actual_symbol = get_symbol_from_token(&data->third_token);
                         data->third_token.type = T_NONE;
                 }
                 else if(data->second_token.type != T_NONE)
                 {
-                        actual_symbol = get_symbol_from_token(data->second_token);
+                        actual_symbol = get_symbol_from_token(&data->second_token);
                         data->second_token.type = T_NONE;
                 }
                 else
                 {
-                    actual_symbol = get_symbol_from_token(data->token);
+                    actual_symbol = get_symbol_from_token(&data->token);
                 }
 
 
@@ -318,7 +462,8 @@ int expression(MainData* data)
 
                 if (top_stack_terminal == NULL)
                 {
-                    FREE_RESOURCES_RETURN(ERROR_INTERNAL)
+                    expression_stack_destroy(stack);
+                    errInter();
                 }
 
 		/// use of precedence table
@@ -403,10 +548,8 @@ int expression(MainData* data)
 			            /// empty second and thirh token
                         if(data->third_token.type == T_NONE && data->second_token.type == T_NONE)
                         {
-                            if ((result = getParserToken(&data->token)))
-                            {
-                                FREE_RESOURCES_RETURN(result)
-                            }
+                            getParserToken(&data->token);
+
                         }
                         break;
 
@@ -417,20 +560,14 @@ int expression(MainData* data)
                         /// empty second and thirh token
                         if(data->third_token.type == T_NONE && data->second_token.type == T_NONE)
                         {
-                            if ((result = getParserToken(&data->token)))
-                            {
-                                FREE_RESOURCES_RETURN(result)
-                            }
+                            getParserToken(&data->token);
                         }
                         break;
                                 
 
 			/// reduce
                         case R:
-                                if ((result = reduce( stack)))
-                                {
-                                    FREE_RESOURCES_RETURN(result)
-                                }
+                                reduce( stack);
                         break;
 
 			/// error
@@ -441,7 +578,8 @@ int expression(MainData* data)
                                 }
                                 else
                                 {
-                                    FREE_RESOURCES_RETURN(SYNTAX_ERROR)
+                                    expression_stack_destroy(stack);
+                                    errSyn();
                                 }
                             break;
                         default:
@@ -453,7 +591,8 @@ int expression(MainData* data)
 	/// no end of stack
         if (expression_stack_empty(stack) == true)
         {
-            FREE_RESOURCES_RETURN(ERROR_INTERNAL)
+            expression_stack_destroy(stack);
+            errInter();
         }
         
 	/// not reduced symbols
@@ -461,8 +600,9 @@ int expression(MainData* data)
 
         if (final_non_terminal->symbol != NON_TERM)
         {
-            FREE_RESOURCES_RETURN(SYNTAX_ERROR)
+            expression_stack_destroy(stack);
+            errSyn();
         }
-
-    FREE_RESOURCES_RETURN(SYNTAX_OK)
+    expression_stack_destroy(stack);
+        return SYNTAX_OK;
 }

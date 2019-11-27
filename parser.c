@@ -15,11 +15,11 @@
 #include "parser.h"
 
 #define GET_TOKEN()\
-if ((result = getParserToken(&data->token)) != SCANNER_TOKEN_OK)\
-return result
+getParserToken(&data->token)
+
 
 #define CHECK_TYPE(_type)											\
-if (data->token.type != (_type)) return SYNTAX_ERROR
+if (data->token.type != (_type)) errSyn()
 
 
 
@@ -28,9 +28,8 @@ if (data->token.type != (_type)) return SYNTAX_ERROR
 // ==================================================================
 
 
-static int main_body(MainData* data)
+ int main_body(MainData* data)
 {
-    int result;
     GET_TOKEN();
 
     switch(data->token.type)
@@ -38,11 +37,8 @@ static int main_body(MainData* data)
         case T_DEF:
             ///Pravidlo 1: def ID ( <func_params> ) :EOL INDENT <main_func> DEDENT <main_body>
 
-
             GET_TOKEN();
             CHECK_TYPE(T_ID);
-
-
 
 //            // TODO ZKONTROLOVAT
 //            /// pokud již byla funkce definována
@@ -62,26 +58,20 @@ static int main_body(MainData* data)
             CHECK_TYPE(T_LBRACK);
 
             GET_TOKEN();
-            result = def_func_params(data);
-            if (result != SYNTAX_OK) return result;
+            def_func_params(data);
 
             GET_TOKEN();
             CHECK_TYPE(T_COLON);
             GET_TOKEN();
             CHECK_TYPE(T_EOL);
-            //gen_code_from_line(def_line);
 
             GET_TOKEN();
             CHECK_TYPE(T_INDENT);
 
             GET_TOKEN();
-            data->in_function = true;
-            result = main_func(data);
-            if (result != SYNTAX_OK) return result;
-            data->in_function = false;
+            main_func(data);
 
             CHECK_TYPE(T_DEDENT);
-
 
             return main_body(data);
 
@@ -102,8 +92,7 @@ static int main_body(MainData* data)
         case T_EOL:
             // Pravidlo 2 <main_body> -> <code> <main_body>
 
-            result = code(data);
-            if (result != SYNTAX_OK) return result;
+            code(data);
 
             return main_body(data);
 
@@ -112,16 +101,14 @@ static int main_body(MainData* data)
             return SYNTAX_OK;
 
         default:
+            errSyn();
             return SYNTAX_ERROR;
     }
 }
 
 
-static int main_func(MainData* data)
+ int main_func(MainData* data)
 {
-    int result;
-    int i;
-
     switch (data->token.type)
     {
         case T_IF:
@@ -140,16 +127,14 @@ static int main_func(MainData* data)
         case T_STRING:
         case T_EOL:
         case T_PASS:
-            // pravidlo 38: <main> -> <code> <main>
+            /// pravidlo 38: <main> -> <code> <main_func>
 
-            result = code(data);
-            if (result != SYNTAX_OK) return result;
+            code(data);
             return main_func(data);
 
         case T_RETURN:
-            // pravidlo 39: return <expr> <main_func>
-            i = expression(data);
-            if(i != 0) return i;
+            /// pravidlo 39: return <expr> <main_func>
+            expression(data);
 
             return main_func(data);
         case T_DEDENT:
@@ -157,42 +142,35 @@ static int main_func(MainData* data)
             return SYNTAX_OK;
 
         default:
+            errSyn();
             return SYNTAX_ERROR;
     }
 }
 
 
-static int def_func_params(MainData* data)
+ int def_func_params(MainData* data)
 {
-    int result;
-
     switch (data->token.type)
     {
         case T_ID:
             // pravidlo 4: <def_func_params> -> "ID" <func_param_x>
 
-            ///sem se dostaneme pouze pokud funkce nebyla definovana
-
-
             GET_TOKEN();
-            result = func_param_x(data);
-            if (result != SYNTAX_OK) return result;
-
+            func_param_x(data);
             return SYNTAX_OK;
 
         case T_RBRACK:
             // pravidlo 5: <def_func_params> -> e
             return SYNTAX_OK;
         default:
+            errSyn();
             return SYNTAX_ERROR;
     }
 }
 
 
-static int func_param_x(MainData* data)
+ int func_param_x(MainData* data)
 {
-    int result;
-
     switch (data->token.type)
     {
         case T_COMMA:
@@ -204,22 +182,21 @@ static int func_param_x(MainData* data)
             ///sem se dostaneme pouze pokud funkce nebyla definovana
 
 //            // ULOŽENÍ PARAMETRU FUNKCE
-
-            return func_param_x(data);
+            GET_TOKEN();
+             func_param_x(data);
 
         case T_RBRACK:
              // pravidlo 7: <func_param_x> -> e
              return SYNTAX_OK;
         default:
+            errSyn();
             return SYNTAX_ERROR;
     }
 }
 
 
-static int main_(MainData* data)
+ int main_(MainData* data)
 {
-    int result;
-
     switch (data->token.type)
     {
         case T_IF:
@@ -240,8 +217,7 @@ static int main_(MainData* data)
         case T_PASS:
             // pravidlo 8: <main> -> <code> <main>
 
-            result = code(data);
-            if (result != SYNTAX_OK) return result;
+            code(data);
             return main_(data);
 
         case T_DEDENT:
@@ -249,16 +225,14 @@ static int main_(MainData* data)
             return SYNTAX_OK;
 
         default:
+            errSyn();
             return SYNTAX_ERROR;
     }
 }
 
 
-static int code(MainData* data)
+ int code(MainData* data)
 {
-    int result;
-    int i;
-
     switch (data->token.type)
     {
         case T_INPUTS:
@@ -270,8 +244,7 @@ static int code(MainData* data)
         case T_ORD:
         case T_CHR:
             // pravidlo 10: <code> -> <inner_func> EOL
-            result = inner_func(data);
-            if (result != SYNTAX_OK) return result;
+            inner_func(data);
 
             GET_TOKEN();
             CHECK_TYPE(T_EOL);
@@ -284,9 +257,7 @@ static int code(MainData* data)
 
             ///samostatně stojící výraz
 
-            i = expression(data);
-            if(i != 0) return i;
-
+            expression(data);
 
             CHECK_TYPE(T_EOL);
             return SYNTAX_OK;
@@ -294,11 +265,9 @@ static int code(MainData* data)
         case T_IF:
             // pravidlo 12: <code> -> if <expr> : EOL INDENT <main> DEDENT else : EOL INDENT <main>  EOL DEDENT
 
-
             GET_TOKEN();
 
-            i = expression(data);
-            if(i != 0) return i;
+            expression(data);
 
             CHECK_TYPE(T_COLON);
 
@@ -308,8 +277,7 @@ static int code(MainData* data)
             GET_TOKEN();
             CHECK_TYPE(T_INDENT);
             GET_TOKEN();
-            result = main_(data);
-            if (result != SYNTAX_OK) return result;
+            main_(data);
             CHECK_TYPE(T_DEDENT);
 
             GET_TOKEN();
@@ -323,8 +291,7 @@ static int code(MainData* data)
             GET_TOKEN();
             CHECK_TYPE(T_INDENT);
             GET_TOKEN();
-            result = main_(data);
-            if (result != SYNTAX_OK) return result;
+            main_(data);
             CHECK_TYPE(T_EOL);
 
             GET_TOKEN();
@@ -335,8 +302,7 @@ static int code(MainData* data)
             // pravidlo 13: <code> -> while <expr> : EOL INDENT <main>   EOL DEDENT
             GET_TOKEN();
 
-            i = expression(data);
-            if(i != 0) return i;
+            expression(data);
             CHECK_TYPE(T_COLON);
 
             GET_TOKEN();
@@ -345,8 +311,7 @@ static int code(MainData* data)
             GET_TOKEN();
             CHECK_TYPE(T_INDENT);
             GET_TOKEN();
-            result = main_(data);
-            if (result != SYNTAX_OK) return result;
+            main_(data);
             CHECK_TYPE(T_EOL);
 
             GET_TOKEN();
@@ -366,6 +331,7 @@ static int code(MainData* data)
             //pravidlo 37: <main> -> EOL<main>
             GET_TOKEN();
             CHECK_TYPE(T_EOL);
+            GET_TOKEN();
             return SYNTAX_OK;
 
         default:
@@ -374,11 +340,8 @@ static int code(MainData* data)
 }
 
 /// ID
-static int identif(MainData* data)
+ int identif(MainData* data)
 {
-    int result;
-    int i;
-
     switch (data->token.type)
     {
         case T_EQ_COMP:
@@ -398,9 +361,7 @@ static int identif(MainData* data)
             ///SAMOSTATNĚ STOJÍCÍ VÝRAZ
 
 
-            i = expression(data);
-            if(i != 0) return i;
-
+            expression(data);
             return SYNTAX_OK;
 
         case T_LBRACK:
@@ -437,8 +398,7 @@ static int identif(MainData* data)
 //                }
 //            }
 
-            result = call_func_params(data);
-            if (result != SYNTAX_OK) return result;
+            call_func_params(data);
 
             //GET_TOKEN();
             CHECK_TYPE(T_EOL);
@@ -467,6 +427,7 @@ static int identif(MainData* data)
             return ins(data);
 
         default:
+            errSyn();
             return SYNTAX_ERROR;
     }
 
@@ -474,11 +435,8 @@ static int identif(MainData* data)
 
 
 ///ID =
-static int ins(MainData* data)
+ int ins(MainData* data)
 {
-    int result;
-    int i;
-
     switch (data->token.type)
     {
         case T_INT:
@@ -486,8 +444,7 @@ static int ins(MainData* data)
         case T_STRING:
             // rule 18: <ins> -> EXPR EOL
 
-            i = expression(data);
-            if(i != 0) return i;
+            expression(data);
             CHECK_TYPE(T_EOL);
 
             return SYNTAX_OK;
@@ -499,16 +456,15 @@ static int ins(MainData* data)
             return ins_id(data);
 
         default:
+            errSyn();
             return SYNTAX_ERROR;
     }
 }
 
 
 ///ID = ID
-static int ins_id(MainData* data)
+ int ins_id(MainData* data)
 {
-    int result;
-
     switch (data->token.type)
     {
         case T_LBRACK:
@@ -556,8 +512,7 @@ static int ins_id(MainData* data)
 //
 //                 data->number_of_params = 1;
                 GET_TOKEN();
-                result = call_func_param_x(data);
-                if (result != SYNTAX_OK) return result;
+                call_func_param_x(data);
 
                 ///kontrola poctu parametru
 //                Symbol* s = func_add(data->table, data->func_id->data->string);
@@ -567,8 +522,7 @@ static int ins_id(MainData* data)
             else
             {
                 GET_TOKEN();
-                result = call_func_params(data);
-                if (result != SYNTAX_OK) return result;
+                call_func_params(data);
             }
 
 
@@ -592,26 +546,19 @@ static int ins_id(MainData* data)
             data->third_token = data->second_token;
             data->second_token = data->token;
 
-            //data->op = new_operator(BEGIN_EXPR);
-            //(data->prog, data->op);
-            int i = expression(data);
-            if(i != 0) return i;
-            //data->op = new_operator(END);
-            //(data->prog, data->op);
-
+            expression(data);
             CHECK_TYPE(T_EOL);
             return SYNTAX_OK;
 
         default:
+            errSyn();
             return SYNTAX_ERROR;
     }
 }
 
 
-static int call_func_params(MainData* data)
+ int call_func_params(MainData* data)
 {
-    int result;
-
     switch (data->token.type)
     {
         case T_ID:
@@ -622,8 +569,8 @@ static int call_func_params(MainData* data)
 
             GET_TOKEN();
             //data->number_of_params = 1;
-            result = call_func_param_x(data);
-            if (result != SYNTAX_OK) return result;
+            call_func_param_x(data);
+
 
             ///kontrola poctu parametru
 //            Symbol* s = func_add(data->table, data->func_id->data->string);
@@ -660,15 +607,14 @@ static int call_func_params(MainData* data)
 //            return SYNTAX_OK;
 
         default:
+            errSyn();
             return SYNTAX_ERROR;
     }
 }
 
 
-static int call_func_param_x(MainData* data)
+ int call_func_param_x(MainData* data)
 {
-    int result;
-
     switch (data->token.type)
     {
         case T_COMMA:
@@ -695,10 +641,8 @@ static int call_func_param_x(MainData* data)
 }
 
 
-static int inner_func(MainData* data)
+ int inner_func(MainData* data)
 {
-    int result;
-
     switch (data->token.type)
     {
         case T_INPUTS:
@@ -743,9 +687,7 @@ static int inner_func(MainData* data)
 
 
                 GET_TOKEN();
-                result = term(data);
-                if (result != SYNTAX_OK) return result;
-
+                term(data);
 
             } else if (data->token.type == T_STRING || data->token.type == T_INT || data->token.type == T_FLOAT) {
 
@@ -762,20 +704,22 @@ static int inner_func(MainData* data)
 
 
                 GET_TOKEN();
-                result = term(data);
-                if (result != SYNTAX_OK) return result;
-
-
-            } else{
+                term(data);
+            }
+            else
+            {
+                errSyn();
                 return SYNTAX_ERROR;
             }
             GET_TOKEN();
-            result = term(data);
-            if (result != SYNTAX_OK) return result;
+            term(data);
 
             GET_TOKEN();
-            if (data->token.type != T_RBRACK) return SYNTAX_ERROR;
-
+            if (data->token.type != T_RBRACK)
+            {
+                errSyn();
+                return SYNTAX_ERROR;
+            }
             return SYNTAX_OK;
 
 
@@ -800,10 +744,8 @@ static int inner_func(MainData* data)
                 return SYNTAX_OK;
             }
 
-
         case T_SUBSTR:
             //pravidlo 32: <inner_func> -> substr (STRING, INT, INT )
-
 
             GET_TOKEN();
             CHECK_TYPE(T_LBRACK);
@@ -828,7 +770,11 @@ static int inner_func(MainData* data)
                 {
 
                 }
-                else return SYNTAX_ERROR;
+                else
+                {
+                    errSyn();
+                    return SYNTAX_ERROR;
+                }
 
                 GET_TOKEN();
                 CHECK_TYPE(T_COMMA);
@@ -842,7 +788,11 @@ static int inner_func(MainData* data)
                 {
 
                 }
-                else return SYNTAX_ERROR;
+                else
+                {
+                    errSyn();
+                    return SYNTAX_ERROR;
+                }
 
                 GET_TOKEN();
                 CHECK_TYPE(T_RBRACK);
@@ -878,15 +828,17 @@ static int inner_func(MainData* data)
                 {
 
                 }
-                else return SYNTAX_ERROR;
+                else
+                {
+                    errSyn();
+                    return SYNTAX_ERROR;
+                }
 
 
                 GET_TOKEN();
                 CHECK_TYPE(T_RBRACK);
                 return SYNTAX_OK;
             }
-
-
 
         case T_CHR:
             //pravidlo 34: <inner_func> -> chr (INT )
@@ -911,15 +863,14 @@ static int inner_func(MainData* data)
             }
 
         default:
+            errSyn();
             return SYNTAX_ERROR;
     }
 }
 
 
-static int term(MainData* data)
+ int term(MainData* data)
 {
-    int result;
-
     switch (data->token.type)
     {
         case T_COMMA:
@@ -945,15 +896,19 @@ static int term(MainData* data)
                // data->op = new_operand(data->symb);
                 //(data->prog, data->op);
 
-            } else
+            }
+            else
+            {
+                errSyn();
                 return SYNTAX_ERROR;
-
+            }
             return term(data);
 
         case T_RBRACK:
             // pravidlo 36: <term> -> e
             return SYNTAX_OK;
         default:
+            errSyn();
             return SYNTAX_ERROR;
     }
 }
