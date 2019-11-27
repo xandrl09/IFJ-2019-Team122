@@ -79,8 +79,8 @@ symbol *search_sym(symtable *table, char* identifier);
 /*
  * Práce se symboly
  */
-void insert_symbol(symtable *table, symbol *sym);
-void create_insert_symbol(char *identifier,ST_type type, char *value);
+void in_sym(symtable *table, symbol *sym);
+void insert_symbol(char *identifier, ST_type type, char *value); // = in_sym + create_symbol
 void symbol_delete(symtable *table, char* identifier);
 void symbols_destroy(symtable *table);
 

@@ -281,7 +281,7 @@ symbol *search_sym(symtable *table, char* identifier) {
  *      - pokud má stejný identifikátor - updatuje hodnotu
  *      - pokud ne, vloží nový symbol před existující na stejnou pozici a patřičně propojí
  */
-void insert_symbol(symtable *table, symbol *sym) {
+void in_sym(symtable *table, symbol *sym) {
     if(is_in_table(table, sym->identifier)) {
         if (table->count >= table->size) {
             symtable_resize(table);
@@ -311,28 +311,28 @@ void insert_symbol(symtable *table, symbol *sym) {
 /*
  * Současné vytvoření a vložení symbolu do tabulky
  */
-void create_insert_symbol( char *identifier,ST_type type, char *value) {
+void insert_symbol( char *identifier,ST_type type, char *value) {
     if(stack != NULL) {
         if(identifier != NULL) {
             if(type == INT) {
                 symbol *tmp = create_symbol_int(identifier, value);
-                insert_symbol(stack->sym_table[stack->top], tmp);
+                in_sym(stack->sym_table[stack->top], tmp);
             }
             else if(type == FLOAT) {
                 symbol *tmp = create_symbol_float(identifier, value);
-                insert_symbol(stack->sym_table[stack->top], tmp);
+                in_sym(stack->sym_table[stack->top], tmp);
             }
             else if(type == FUNCTION) {
                 symbol *tmp = create_symbol_function(identifier);
-                insert_symbol(stack->sym_table[stack->top], tmp);
+                in_sym(stack->sym_table[stack->top], tmp);
             }
             else if(type == STRING) {
                 symbol *tmp = create_symbol_string(identifier, value);
-                insert_symbol(stack->sym_table[stack->top], tmp);
+                in_sym(stack->sym_table[stack->top], tmp);
             }
             else if(type == NIL) {
                 symbol *tmp = create_symbol_nil(identifier);
-                insert_symbol(stack->sym_table[stack->top], tmp);
+                in_sym(stack->sym_table[stack->top], tmp);
             }
         }
     }
