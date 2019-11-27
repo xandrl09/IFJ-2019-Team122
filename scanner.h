@@ -111,7 +111,7 @@ T_token *token_init ();
 int getParserToken(T_token *token);
 void assignTokenData(T_token *out_token, Token in_token);
 void assignTokenType(T_token *out_token, Token in_token);
-T_token* turnScannerTokensToParserTokens(Token token);
+void turnScannerTokensToParserTokens(Token *input, T_token *output);
 
 
 // used to work with strings

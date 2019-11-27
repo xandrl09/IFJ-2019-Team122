@@ -1,5 +1,5 @@
 /**
- * Implementace překladače imperativního jazyka IFJ18
+ * Implementace překladače imperativního jazyka IFJ19
  *
  * xlinne00   Linner Marek
  * xstoja06   Stojan Martin
@@ -7,7 +7,6 @@
  */
 
 // TODO - escape sekvence nejsou updatovane pro soucasny struct Token
-
 
 
 #include <stdlib.h>
@@ -49,8 +48,7 @@ int getParserToken(T_token *token) {
     if(tokenQueue->Act == NULL) {
         DLFirst(tokenQueue);
     }
-
-    token = turnScannerTokensToParserTokens(*tokenQueue->Act);
+    turnScannerTokensToParserTokens(tokenQueue->Act, token);
     //printf("Token %s parsed.\n", tokenQueue->Act->value);
     DLSucc(tokenQueue);
 
@@ -61,11 +59,9 @@ int getParserToken(T_token *token) {
 }
 
 
-T_token *turnScannerTokensToParserTokens(Token token) {
-    T_token *ret_token = token_init();
-    assignTokenData(ret_token, token);
-    assignTokenType(ret_token, token);
-    return ret_token;
+void turnScannerTokensToParserTokens(Token *input, T_token *output) {
+    assignTokenData(output, *input);
+    assignTokenType(output, *input);
 }
 
 void assignTokenData(T_token *out_token, Token in_token) {
@@ -237,13 +233,24 @@ int isBuiltInFunc(char *string) {
     return 0;
 }
 
+void stripDocString(char* val) {
+    for(int i = 0; i < strlen(val); i++)
+        val[i] = val[i+3];
+    int cnt = 0;
+    for(int i = strlen(val) - 1;; i--)  {
+        val[i] = '\0';
+        cnt++;
+        if (cnt == 3)
+            break;
+    }
+}
+
 void saveTokenAndReset(tDLList *L, tokenType ttype, char *val, enum stateMachineStates *state, int positionInLine) {
-    // questionable
-    //if (ttype == error) {
-    //errLex();
-    //}
     if (isBuiltInFunc(val))
         ttype = builtInFunc;
+
+    if (ttype == docString)
+        stripDocString(val);
 
     DLInsertLast(L, ttype, val, positionInLine);
     if (ttype != INDENT && ttype != DEDENT)
@@ -326,20 +333,33 @@ void handleEOF(tDLList *tokenQueue, char *buffer, enum stateMachineStates *state
     saveTokenAndReset(tokenQueue, EoF, "", state, positionInLine);
 }
 
+int is_escape_sequence(char previous, char received)    {
+    int possible_seq_cnt = 6;
+    char possibilities[] ={'"', '\'', 'n', 't','\\', 'x'};
+    if (previous == '\\')   {
+        for(int i = 0; i < possible_seq_cnt; i++)  {
+            if (possibilities[i] == received)
+                return 1;
+        }
+    }
+    return 0;
+}
+
 char *handleEscapeSequence(char receivedChar, char *buffer) {
+    int fgt = 2;
     if (receivedChar == '\\') {
-        sliceString(buffer, strlen(buffer) - 1);
+        sliceString(buffer, strlen(buffer)- 1);
     } else if (receivedChar == 'n') {
-        sliceString(buffer, strlen(buffer) - 2);
+        sliceString(buffer, strlen(buffer) - fgt);
         strcat(buffer, "\n");
     } else if (receivedChar == 't') {
-        sliceString(buffer, strlen(buffer) - 2);
+        sliceString(buffer, strlen(buffer) - fgt);
         strcat(buffer, "\t");
     } else if (receivedChar == 's') {
-        sliceString(buffer, strlen(buffer) - 2);
+        sliceString(buffer, strlen(buffer) - fgt);
         strcat(buffer, " ");
     } else if (receivedChar == '\'') {
-        sliceString(buffer, strlen(buffer) - 2);
+        sliceString(buffer, strlen(buffer) - fgt);
         strcat(buffer, "\'");
     } else if (receivedChar == 'x') {
         char input[3] = {0, 0, 0};
@@ -455,19 +475,38 @@ int isWhitespace(char c) {
     return 0;
 }
 
+
+// SEM MUSIMDOSTAT handleescapesequence()
 void runToEndOfDocString(char *buffer) {
+    char previousChar = '\0';
     char receivedChar = '\0';
-    int found = 0;
-    while (found == 0) {
+    int cnt = 1;
+    while(1)    {
+        previousChar = receivedChar;
+        receivedChar = (char) fgetc(inputFile);
+        if (is_escape_sequence(previousChar, receivedChar))
+            handleEscapeSequence(receivedChar, buffer);
+        else
+            appendToString(receivedChar,buffer, STATE_DOCSTRING);
+        if(receivedChar != '"')
+            cnt = 0;
+        else
+            cnt++;
+        if(cnt == 3)
+            break;
+    }
         // run to next "
-        while ((receivedChar = (char) fgetc(inputFile)) != '"') {
+        /*while ((receivedChar = (char) fgetc(inputFile)) != '"') {
             appendToString(receivedChar, buffer, STATE_DOCSTRING);
         }
          appendToString(receivedChar, buffer, STATE_DOCSTRING);
         int cnt = 1;
         while (1) {
+            previousChar = receivedChar;
             receivedChar = (char) fgetc(inputFile);
             appendToString(receivedChar, buffer, STATE_DOCSTRING);
+            if (previousChar == '\\')
+                handleEscapeSequence(receivedChar, buffer);
             if (receivedChar != '"')
                 cnt = 0;
             else
@@ -476,8 +515,7 @@ void runToEndOfDocString(char *buffer) {
                 found = 1;
                 break;
             }
-        }
-    }
+        }*/
 }
 
 // takes care of indentation at the beginning of input's line
@@ -530,10 +568,10 @@ int generateDEDENTTokens(tDLList *queue, int i) {
         res++;
         saveTokenAndReset(queue, DEDENT, "", NULL, res);
         if (popped == 0)
-            errLex();
+            errSyn();
     }
     if (i != top(indentationStack))
-        errLex();
+        errSyn();
     return res;
 }
 
