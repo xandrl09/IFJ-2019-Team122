@@ -10,7 +10,7 @@
 #include "generator.h"
 #include "stack_cd.h"
 
-STmaintablePtr globalSymTable;
+//STmaintablePtr globalSymTable;
 tDLList *tokenQueue;
 
 void evaluateInput(int param)	{
@@ -25,14 +25,14 @@ int main(int argc, char* argv[])	{
     //evaluateInput(argc);
     createScanner(argv[1]);			//argv[1] == path
     DLInitList(tokenQueue);
-    globalSymTable = init_table(10);
+    //globalSymTable = init_symtable(10);
 
 //    gen_init();1
 //    getLineOfTokens(tokenQueue);  // calling scanner
 //    gen_code_from_line(def_line); // calling generator
 
 
-    table_delete(&globalSymTable);
+    //table_delete(&globalSymTable);
     DLDisposeList(tokenQueue);
     return 0;
 }

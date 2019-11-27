@@ -13,7 +13,6 @@
 #include "scanner.h"
 #include "err.h"
 #include "symtable.h"
-//#include "func.h"
 #include "expresions.h"
 
 // hlavicka pro syntakticky analyzator
@@ -25,7 +24,7 @@
 typedef struct
 {
 
-    STmaintablePtr table; /// CHECK
+    symtable *table; /// CHECK
 
     T_token token;
     T_token second_token;
@@ -39,7 +38,7 @@ typedef struct
 
     bool non_declared_function;	/// Function that has been only defined
 
-    STsymPtr symb; /// sym
+    //STsymPtr symb; /// sym
 } MainData;
 
 

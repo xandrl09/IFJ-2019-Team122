@@ -931,8 +931,8 @@ int parse()
 
             //(data)->func_id = token_init();
             //(data)->result = token_init();
-            (data)->table = init_table(1); // FIXME
-            (data)->symb = NULL;
+           (data)->table = symtable_init(1); // FIXME
+//            (data)->symb = NULL;
             (data)->in_function = false;
             (data)->non_declared_function = false;
             //(data)->number_of_params = 0;
