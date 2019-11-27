@@ -3,6 +3,7 @@
 
 #define SEED 1159241
 
+#pragma once
 
 struct symbol;
 struct symtable;
