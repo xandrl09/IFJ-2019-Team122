@@ -1,94 +1,71 @@
-/**
- * Implementace překladače imperativního jazyka IFJ18
- *
- * xscevi00   Ščevik Ľuboš
- * xlinne00   Linner Marek
- * xstoja06   Stojan Martin
- * xbakal01   Bakaľárová Alica
- *
- */
-
-#ifndef _IFJ_SYMTAB_H
-#define _IFJ_SYMTAB_H
 #include <stdbool.h>
-#include <stdio.h>
-#include "err.h"
-#include "queue.h"
+#include <stdlib.h>
 
-//all variables behave as local, it is allowed to have just one symbol with certain identifier(is it overwritten or error?)
-
-//initial table size doesnt have to be prime number
 #define SEED 1159241
 
-typedef struct STmaintable *STmaintablePtr;
 
-typedef enum {
-	i, f, s, voidtype //0,1,2,3
-} dataType;
-
-typedef enum {
-	variable, function //0,1
-} symType;
-
-typedef union STvalue{
-	int i;
-	float f;
-	char *s;
-} *STvaluePtr; //types of variable from assignment
-
-typedef struct STvar {
-	union STvalue value; //value of variable
-	dataType type; //datatype of variable
-	bool gen_used; //if its defined in ifjcode
-} *STvarPtr;
-
-typedef struct STfunction {
-	tDLList *paramQueue;
-	dataType returnvalue;
-	unsigned int numberofattr;//number of attributes entering the function
-	bool declared;//???
-	bool defined;
-	unsigned int cycle_aux;
-	unsigned int condition_aux;
-	STmaintablePtr local_table;
-} *STfunctionPtr;
-
-typedef struct STdiv {
-	STvarPtr variable; //division into functions and variables
-	STfunctionPtr function;
-} *STdivPtr;
-
-typedef struct STsym {
-	char *identifier;
-	symType type;//flag
-	STdivPtr div;//division betw var and foo, has another information
-	struct STsym *next;//pointer to following symbol with the same hash number
-	struct STsym *before;
-} *STsymPtr;
-
-typedef struct STmaintable { //header of hash table
-	unsigned int sizeoftable;  //how many hash indices are in the table
-	unsigned int symbolcount;//number of symbols in the table
-	STsymPtr *hash_arr; //array of pointers to the symbols
-} *STmaintablePtr; //actual table od symbols
-
-//function declarations
-STdivPtr createVar(union STvalue value, dataType type);
-STdivPtr createFoo(dataType returntype, unsigned int attrcount, tDLList *paramQueue, bool declared, bool defined);
-STsymPtr createSym(symType type, STdivPtr divptr, char *identifier);
-STmaintablePtr init_table(unsigned int size);
-
-void table_insert(STmaintablePtr *tableptr, STsymPtr *symptr);
-void table_insert_res(STmaintablePtr *tableptr, STsymPtr *symptr);
-void sym_exchg(STsymPtr *symptr);
-bool sym_search(STmaintablePtr *tableptr, char *identifier);
-STsymPtr sym_search_ptr(STmaintablePtr *tableptr, char *identifier);
-void symbol_free(STsymPtr *symptr);
-void symbol_remove(STmaintablePtr *tableptr, char *identifier);
-void table_delete(STmaintablePtr *tableptr);
-unsigned int get_hash(char *word, int tsize);
-
-void printtable(STmaintablePtr *tableptr);
+struct symbol;
+struct symtable;
+struct table_stack *stack;
 
 
-#endif
+typedef struct table_stack {
+    int top;
+    struct symtable *sym_table[255];
+}table_stack;
+
+typedef enum ST_type {
+    INT,
+    FLOAT,
+    FUNCTION,
+    STRING,
+    NIL
+} ST_type;
+
+typedef struct parameter {
+	char* param_name;
+	ST_type type;
+	struct parameter *next_param;
+} parameter;
+
+typedef struct symbol {
+	char* identifier;
+    ST_type type;
+    char* value;
+	parameter *param[255];
+	struct symbol *next_sym;
+	struct symbol *prev_sym;
+} symbol;
+
+typedef struct symtable {
+    int size;
+	symbol *sym[255];
+	unsigned int count;
+} symtable;
+
+void init_symtable();
+void init_next_scope();
+void init_stack();
+void stack_destroy();
+void TS_push(symtable *table);
+void TS_pop();
+symtable* symtable_init(int size);
+void symtable_delete(symtable *target);
+symbol* create_symbol_int(char* identifier, char* value);
+symbol* create_symbol_float(char* identifier, char* value);
+symbol* create_symbol_function(char* identifier);
+symbol* create_symbol_string(char* identifier, char* value);
+symbol* create_symbol_nil(char* identifier);
+void insert_symbol(symtable *table, symbol *sym);
+void create_insert_symbol(char *identifier,ST_type type, char *value);
+void insert_param(char* dest, char* name, ST_type type);
+bool is_in_table(symtable *table, char* identifier);
+symbol *search_sym(symtable *table, char* identifier);
+symbol *search_stack(char* identifier);
+symbol *new_symbol();
+parameter *new_param();
+void init_param(symbol *symbol);
+void symbols_destroy(symtable *table);
+void symbol_delete(symtable *table, char* identifier);
+unsigned int hash_function(char* target, unsigned int size, unsigned int seed);
+void print_stack();

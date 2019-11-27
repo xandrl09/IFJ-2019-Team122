@@ -1,376 +1,538 @@
-/**
- * Implementace překladače imperativního jazyka IFJ18
- *
- * xscevi00   Ščevik Ľuboš
- * xlinne00   Linner Marek
- * xstoja06   Stojan Martin
- * xbakal01   Bakaľárová Alica
- *
- */
-
-#include "symtable.h"
 #include <string.h>
-#include <stdbool.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-#define TRUE 1
-#define FALSE 0
+#include "symtable.h"
+#include "err.h"
+
 
 /*
-*Function allocates memory for the variable structure and defines it with the given values.
+ * Inicializuje zásobníka do něho jednu tabulku symbolů a pushne ji na stack tabulek - globální scope
 */
-STdivPtr createVar(union STvalue value, dataType type){//function for further calling
-	STvarPtr varptr = (STvarPtr)malloc(sizeof(struct STvar));
-	if (varptr == NULL) {
-		fprintf(stderr, "ERROR / space for var not allocated");
-		errInter();
-	}
+void init_symtable() {
+    init_stack();
+    symtable *table = symtable_init(255);
+    TS_push(table);
+}
+
+/*
+ * Zvětšení tabulky symbolů pro rychlejší přístupy
+*/
+void symtable_resize(symtable *table) {
+    int double_size = (table->size) * 2;
+    symtable *tmp = symtable_init(double_size);
+    for(int i = 0; i < table->size; i++) {
+        if(table->sym[i] == NULL) {
+            continue;
+        }
+        unsigned int hash_num = hash_function(table->sym[i]->identifier, tmp->size, SEED);
+        tmp->sym[hash_num] = table->sym[i];
+    }
+    symtable *tmp2 = table;
+    table = tmp;
+    symtable_delete(tmp2);
+}
+
+/*
+ * Inicializace dalšího scope - CREATE_FRAME
+*/
+void init_next_scope() {
+    symtable *smtbl = symtable_init(255);
+    TS_push(smtbl);
+}
+
+/*
+ * Inicializuje stack pro tabulky symbolů (scopes)
+ * Na začátku v něm nic není
+*/
+void init_stack() {
+    int stackSize = 255;
+    int top = 0;
+    table_stack *tmp = malloc(sizeof(symtable) + sizeof(top));
+    if(tmp != NULL) {
+        for (int i = 0; i < stackSize; i++) {
+            tmp->sym_table[i] = NULL;
+        }
+        tmp->top = top;
+        tmp->sym_table[0] = NULL;
+        stack = tmp;
+    }
+    else {
+        printf("Error - init_stack\n");
+        errInter();
+    }
+}
+
+/*
+ * Zruší stack tabulek symbolů a uvolní paměť
+ */
+void stack_destroy() {
+    for(int i = stack->top; i > 0; i--) {
+        TS_pop(stack);
+    }
+    free(stack);
+    stack = NULL;
+}
+
+/*
+ * Pushnutí tabulky na stack tabulek
+ */
+void TS_push(symtable *table) {
+    stack->sym_table[++stack->top] = table;
+}
+
+/*
+ * Popnutí tabulky ze stacku tabulek - dle potřeby možno změnit aby vracela tabulku, co popla
+ */
+void TS_pop() {
+   // symtable *tmp = stack->sym_table[stack->top];
+    symtable_delete(stack->sym_table[stack->top]);
+    stack->sym_table[stack->top--] = NULL;
+   // return *tmp;
+}
+
+/*
+ * Inicializuje tabulku symbolů
+*/
+symtable* symtable_init(int size) {
+    symtable *table = malloc(sizeof(symtable));
+    if (table != NULL) {
+        table->size = size;
+        for(unsigned int i = 0; i < table->size; i++) {
+            table->sym[i] = NULL;
+        }
+        return table;
+    }
+    else {
+        printf("Error - symtable_init\n");
+        errInter();
+        return NULL;
+    }
+}
+
+/*
+ * Zruší tabulku symbolů a uvolní po ní paměť
+*/
+void symtable_delete(symtable *target) {
+    if(target != NULL) {
+        for(unsigned int i = 0; i < target->size; i++) {
+            if (target->sym[i] != NULL) {
+                symbols_destroy(target);
+            }
+        }
+        target->size = 0;
+        free(target);
+        target = NULL;
+    }
+}
+
+/*
+ * Vytvoří symbol typu INT
+ */
+symbol* create_symbol_int(char* identifier, char* value) {
+    symbol *sym = new_symbol();
+    sym->identifier = identifier;
+    sym->type = INT;
+    sym->value = value;
+    init_param(sym);
+    sym->next_sym = NULL;
+    sym->prev_sym = NULL;
+    return sym;
+}
+
+/*
+ * Vytvoří symbol typu FLOAT
+ */
+symbol* create_symbol_float(char* identifier, char* value) {
+    symbol *sym = new_symbol();
+    sym->identifier = identifier;
+    sym->type = FLOAT;
+    sym->value = value;
+    init_param(sym);
+    sym->next_sym = NULL;
+    sym->prev_sym = NULL;
+    return sym;
+}
+
+/*
+ * Vytvoří symbol typu FUNCTION
+ */
+symbol* create_symbol_function(char* identifier) {
+    symbol *sym = new_symbol();
+    sym->identifier = identifier;
+    sym->type = FUNCTION;
+    sym->value = NULL;
+    init_param(sym);
+    sym->next_sym = NULL;
+    sym->prev_sym = NULL;
+    return sym;
+}
+
+/*
+ * Vytvoří symbol typu STRING
+ */
+symbol* create_symbol_string(char* identifier, char* value) {
+    symbol *sym = new_symbol();
+    sym->identifier = identifier;
+    sym->type = STRING;
+    sym->value = value;
+    init_param(sym);
+    sym->next_sym = NULL;
+    sym->prev_sym = NULL;
+    return sym;
+}
+
+/*
+ * Vytvoří symbol typu NIL
+ */
+symbol* create_symbol_nil(char* identifier) {
+    symbol *sym = new_symbol();
+    sym->identifier = identifier;
+    sym->type = NIL;
+    sym->value = NULL;
+    init_param(sym);
+    sym->next_sym = NULL;
+    sym->prev_sym = NULL;
+    return sym;
+}
+
+/*
+ * Vloží symbol do tabulky symbolů
+ *  - pokud už symbol na dané pozici je
+ *      - pokud má stejný identifikátor - updatuje hodnotu
+ *      - pokud ne, vloží nový symbol před existující na stejnou pozici a patřičně propojí
+ */
+void insert_symbol(symtable *table, symbol *sym) {
+    if(is_in_table(table, sym->identifier)) {
+        unsigned int hash_num = hash_function(sym->identifier, table->size, SEED);
+        if (table->count >= table->size) {
+            symtable_resize(table);
+        }
+        if (table->sym[hash_num] == NULL) {
+            table->sym[hash_num] = sym;
+            table->count++;
+        } else {
+            symbol *tmp = table->sym[hash_num];
+            if (tmp->identifier == sym->identifier) {
+                table->sym[hash_num]->value = tmp->value;
+                return;
+            }
+            table->sym[hash_num]->next_sym = tmp;
+            table->sym[hash_num] = sym;
+            table->sym[hash_num]->next_sym->prev_sym = sym;
+        }
+    }
+    else {
+        unsigned int hash_num = hash_function(sym->identifier, table->size, SEED);
+        table->sym[hash_num] = sym;
+        table->count++;
+    }
+}
+
+/*
+ * Současné vytvoření a vložení symbolu do tabulky
+ */
+void create_insert_symbol( char *identifier,ST_type type, char *value) {
+    if(stack != NULL) {
+        if(identifier != NULL) {
+            if(type == INT) {
+                symbol *tmp = create_symbol_int(identifier, value);
+                insert_symbol(stack->sym_table[stack->top], tmp);
+            }
+            else if(type == FLOAT) {
+                symbol *tmp = create_symbol_float(identifier, value);
+                insert_symbol(stack->sym_table[stack->top], tmp);
+            }
+            else if(type == FUNCTION) {
+                symbol *tmp = create_symbol_function(identifier);
+                insert_symbol(stack->sym_table[stack->top], tmp);
+            }
+            else if(type == STRING) {
+                symbol *tmp = create_symbol_string(identifier, value);
+                insert_symbol(stack->sym_table[stack->top], tmp);
+            }
+            else if(type == NIL) {
+                symbol *tmp = create_symbol_nil(identifier);
+                insert_symbol(stack->sym_table[stack->top], tmp);
+            }
+        }
+    }
+}
+
+/*
+ * Vložení parametru s ID 'name' a typem 'type' do symbolu s ID 'dest' v aktuálníhím scope - nejvrchnější tabulce
+ *  - pokud v daném scope symbol 'dest' není, prohledá vyšší scope
+ */
+void insert_param(char* dest, char* name, ST_type type) {
+    if (dest != NULL) {
+        if (name != NULL) {
+            for (int i = stack->top; i > 0; i--) {
+                if (is_in_table(stack->sym_table[i], dest)) {
+                    symbol *dest_sym = search_sym(stack->sym_table[i], dest);
+                    if(dest_sym->type == FUNCTION) {
+                        if (dest_sym->param[0] == NULL) {
+                            parameter *tmp = new_param();
+                            dest_sym->param[0] = tmp;
+                            dest_sym->param[0]->param_name = name;
+                            dest_sym->param[0]->type = type;
+                            dest_sym->param[0]->next_param = NULL;
+                        } else {
+                            int j = 0;
+                            while (dest_sym->param[j] != NULL) {
+                                j++;
+                            }
+                            parameter *tmp = new_param();
+                            dest_sym->param[j] = tmp;
+                            dest_sym->param[j]->param_name = name;
+                            dest_sym->param[j]->type = type;
+                            dest_sym->param[j]->next_param = NULL;
+                        }
+                    }
+                    else {
+                        errSemDef();
+                    }
+                } else {
+                    continue;
+                }
+            }
+        }
+    }
+}
+
+/*
+ * Vrací 1 pokud se symbol v tabulce nachází, 0 pokud ne
+ */
+bool is_in_table(symtable *table, char* identifier) {
+    if(table != NULL || identifier != NULL) {
+        if(search_sym(table, identifier) == NULL) {
+            return 0;
+        }
+        else
+            return 1;
+    }
+    else {
+        printf("Error - is_search_sym\n");
+        errInter();
+        return 0;
+    }
+}
+
+/*
+ * Prohledá tabulku, jestli v ní je symbol s ID 'identifier' a vrátí ho, pokud existuje
+ */
+symbol *search_sym(symtable *table, char* identifier) {
+    if(table == NULL || identifier == NULL) {
+        printf("Error - search_sym\n");
+        errInter();
+        return 0;
+    }
+    else {
+        unsigned int hash_num = hash_function(identifier, table->size, SEED);
+        symbol* tmp = (*table).sym[hash_num];
+
+        while (tmp != NULL) {
+            if(table->sym[hash_num]->identifier != NULL) {
+                if (strcmp(table->sym[hash_num]->identifier, identifier) == 0) {
+                    return tmp;
+                }
+            }
+            tmp = (*table).sym[hash_num]->next_sym;
+        }
+        return NULL;
+    }
+}
+
+/*
+ * Prohledá stack, jestli se v něm nenachází symbols ID identifier
+ *  - prohledá shora dolů - podle scopes
+ *  - vrátí nalezení symbol
+ */
+symbol *search_stack(char* identifier) {
+
+    for(int i = stack->top; i > 0; i--) {
+        if (is_in_table(stack->sym_table[i], identifier)) {
+            symbol *tmp = search_sym(stack->sym_table[i], identifier);
+            return tmp;
+        } else
+            continue;
+    }
+    return 0;
+}
+
+/*
+ * Vytvoří rámec pro nový symbol
+*/
+symbol *new_symbol() {
+	symbol *tmp = malloc(sizeof(symbol));
+	if (tmp != NULL) {
+        tmp->identifier = NULL;
+        tmp->type = NIL;
+        tmp->value = NULL;
+        init_param(tmp);
+        tmp->next_sym = NULL;
+        tmp->prev_sym = NULL;
+        return tmp;
+    }
 	else {
-		varptr->value = value;
-		varptr->type = type;
-		varptr->gen_used=FALSE;
-	}
-
-	STdivPtr divptr = (STdivPtr)malloc(sizeof(struct STdiv));
-	if (divptr == NULL) {
-		fprintf(stderr, "ERROR / space for div-var not allocated");
-		free(varptr);
-		errInter();
-	}
-	divptr->variable = varptr;
-	return divptr;
-}
-
-/*
-*Function allocates memory for the function structure and defines it with the given values.
-*/
-STdivPtr createFoo(dataType returntype, unsigned int attrcount, tDLList *paramQueue, bool declared, bool defined){//function for further calling
-	//treba spravit osetrenie parametrov???
-	STfunctionPtr fooptr = (STfunctionPtr)malloc(sizeof(struct STfunction));
-	if (fooptr == NULL) {
-		fprintf(stderr, "ERROR / space for function not allocated");
-		exit(-1);
-	}
-	fooptr->paramQueue =paramQueue;
-	fooptr->returnvalue = returntype;
-	fooptr->numberofattr = attrcount;
-	fooptr->declared = declared;
-	fooptr->defined = defined;
-	fooptr->cycle_aux=0;
-	fooptr->condition_aux=0;
-	fooptr->local_table=NULL;
-
-	STdivPtr divptr = (STdivPtr)malloc(sizeof(struct STdiv));
-	if (divptr == NULL) {
-		fprintf(stderr, "ERROR / space for div-function not allocated");
-		free(fooptr);
-		errInter();
-	}
-	divptr->function = fooptr;
-	return divptr;
-}
-
-/*
-*Function allocates memory for the symbol and defines it with the given values.
-*/
-STsymPtr createSym(symType type, STdivPtr divptr, char *identifier){//function for further calling
-	STsymPtr symptr = (STsymPtr)malloc(sizeof(struct STsym));
-	if (symptr == NULL) {
-		fprintf(stderr, "ERROR / space for symbol not allocated");
-		errInter();
-	}
-	else{
-		(*symptr).identifier = identifier;
-		symptr->type = type;
-		symptr->div = divptr;
-		symptr->next=NULL;
-		symptr->before=NULL;
-	}
-	return symptr;
-}
-
-/*
-* Function allocates memory for the table of symbols header and for the hasharray of pointers to symbols.
-* Then it initializes pointers to NULL.
-*/
-STmaintablePtr init_table(unsigned int size){//function for further calling
-
-	STmaintablePtr tableptr=(STmaintablePtr)malloc(sizeof(struct STmaintable));
-
-	if (tableptr == NULL) {
-		fprintf(stderr, "ERROR / space for table not allocated");
-		errInter();
-	}
-
-	tableptr->sizeoftable=size;
-	tableptr->symbolcount=0;
-
-	if ( ! (tableptr->hash_arr = (STsymPtr *)malloc(size * sizeof(STsymPtr)))) {
-		free(tableptr);
-		fprintf(stderr, "ERROR / space for array of pointers to symbols not allocated");
-		errInter();
-	}
-
-	// initializations of hashelements in the array
-	for (unsigned int i = 0; i < size; i++) {
-		tableptr->hash_arr[i]=(STsymPtr)NULL;
-	}
-
-	return tableptr;
-}
-
-/*
-* Function checks if there is already a symbol at the given index of hasharray.
-* If no, it inserts the given symbol into the first index.
-* If yes, it inserts the given symbol into the first index of the array of symbols
-* with the same hash and set the next and before pointers.
-* If the table is half full, it makes a new table, rehashes all the symbols and free the old table header and hasharray.
-*/
-void table_insert(STmaintablePtr *tableptr, STsymPtr *symptr) {//function for further calling
-
-	if(sym_search_ptr(tableptr, (*symptr)->identifier)) //if the symbol with the same identifier already exists in the table
-		symbol_remove(tableptr, (*symptr)->identifier); //it removes it
-	//^^^^^NOT TESTED^^^^^
-
-	//spravit kontrolu parametrov?
-	unsigned int hash_number=get_hash((*symptr)->identifier, (*tableptr)->sizeoftable);
-	((*tableptr)->symbolcount)++;
-	if ((*tableptr)->symbolcount > (*tableptr)->sizeoftable)
-		errInter();
-
-	if ((*tableptr)->hash_arr[hash_number] == NULL) {//inserts as the first element into empty array
-		(*tableptr)->hash_arr[hash_number]=*symptr;
-	}
-	else{////inserts as the first element into non-empty array
-		(*symptr)->next=(*tableptr)->hash_arr[hash_number];
-		(*tableptr)->hash_arr[hash_number]=*symptr;
-		(*symptr)->next->before=*symptr;
-	}
-
-	unsigned int number=(*tableptr)->sizeoftable;
-//	number/=2;
-
-/*
-	if(!((*tableptr)->symbolcount < number)) {
-		unsigned int doublesize = (*tableptr)->sizeoftable; doublesize *= 2;
-		STmaintablePtr secondtable = init_table(doublesize);
-		STsymPtr symptr2, sym_next;
-
-		for (unsigned int i = 0; i < (*tableptr)->sizeoftable; i++) {
-			symptr2 = (*tableptr)->hash_arr[i];
-			while(symptr2!=NULL){
-				sym_next=symptr2->next;
-				table_insert_res(&secondtable, &symptr2);
-				symptr2=sym_next;
-			}
-		}
-		free((*tableptr)->hash_arr);
-		free(*tableptr);
-		*tableptr=secondtable;
-	}
-*/
-}
-
-//Table insert for table_resize function
-void table_insert_res(STmaintablePtr *tableptr, STsymPtr *symptr) {
-
-	unsigned int hash_number=get_hash((*symptr)->identifier, (*tableptr)->sizeoftable);
-	(*tableptr)->symbolcount++;
-
-	if ((*tableptr)->hash_arr[hash_number] == NULL) {//inserts as the first element into empty array
-		(*tableptr)->hash_arr[hash_number]=*symptr;
-		(*symptr)->before=NULL;
-		(*symptr)->next=NULL;
-	}
-	else{//inserts as the first element into non-empty array
-		(*symptr)->next=(*tableptr)->hash_arr[hash_number];
-		(*tableptr)->hash_arr[hash_number]=*symptr;
-		(*symptr)->next->before=*symptr;
-		(*symptr)->before=NULL;
+	    printf("Error - new_symbol\n");
+	    errInter();
+		return NULL;
 	}
 }
 
 /*
-*Function exchanges symbol with his left neighbour in the list. (We are sure that symbol has at least one left neighbour.)
-*/
-void sym_exchg(STsymPtr *symptr){//right neighbour
-	STsymPtr sym_next, sym_before;
-
-	if((*symptr)->before->before!=NULL)//if the symbol is at least third
-		(*symptr)->before->before->next=(*symptr);
-	if((*symptr)->next!=NULL)//if symbol is not the last
-		(*symptr)->next->before=(*symptr)->before;
-
-	sym_next=(*symptr)->next;
-	sym_before=(*symptr)->before->before;
-
-	(*symptr)->next=(*symptr)->before;//some incomprehensible magic
-	(*symptr)->before->next=sym_next;
-	(*symptr)->before->before=*symptr;
-	(*symptr)->before=sym_before;
+ * Vytvoří nový parametr pro funkci - TUTAJ TO LEAKUJE
+ */
+parameter *new_param() {
+    parameter *tmp = malloc(sizeof(parameter));
+    if(tmp != NULL) {
+        tmp->param_name = NULL;
+        tmp->type = NIL;
+        tmp->next_param = NULL;
+        return tmp;
+    }
+    else {
+        printf("Error - new_param\n");
+        free(tmp);
+        errInter();
+        return NULL;
+    }
 }
 
 /*
-* Function searches for the element with the given identifier, returns true if finds it, false if not.
-* Works only for searching with identifier.
-*/
-bool sym_search(STmaintablePtr *tableptr, char *identifier) {//function for further calling
-
-	if (identifier == 0)
-		return FALSE;
-
-	if(*tableptr == NULL || identifier == NULL) {
-		fprintf(stderr, "Bad parameters in foo sym_search");
-		errInter();
-	}
-
-	unsigned int hash_number=get_hash(identifier, (*tableptr)->sizeoftable);
-	STsymPtr symptr=(*tableptr)->hash_arr[hash_number];
-
-	while(symptr!=NULL){//if index is not empty
-		if(strcmp(symptr->identifier, identifier) == 0){//if identifiers are equal
-			if(symptr->before!=NULL){//if searched symbol is not first
-				sym_exchg(&symptr);//moving searched symbol one item to the left
-				if(symptr->before==NULL)//if the symbol is first after exchange
-					(*tableptr)->hash_arr[hash_number]=symptr;//saves pointer to the symbol to the hasharray
-			}
-			return TRUE;
-		}
-		symptr=symptr->next;
-	}
-	return FALSE;
+ * Inicializace pole parametrů symbolu 'symbol'
+ */
+void init_param(symbol *symbol) {
+    for(int i = 0; i < 255; i++) {
+        symbol->param[i] = NULL;
+    }
 }
+/*
+parameter *search_param(char *identifier) {
+    char *return_value = NULL;
+    if(identifier != NULL) {
+        symbol *tmp = search_stack(identifier);
+        if(tmp != NULL) {
+            return tmp->param;
+        }
+    }
+    return return_value;
+}
+*/
 
 /*
-* Function searches for the element with the given identifier, returns pointer to the symbol if finds it, NULL if not.
-*/
-STsymPtr sym_search_ptr(STmaintablePtr *tableptr, char *identifier) {//function for further calling
-
-	if(*tableptr == NULL || identifier == NULL) {
-		fprintf(stderr, "Bad parameters in foo sym_search_ptr");
-		errInter();
-	}
-	unsigned int hash_number=get_hash(identifier, (*tableptr)->sizeoftable);
-	STsymPtr symptr=(*tableptr)->hash_arr[hash_number];
-
-	while(symptr!=NULL){
-		if(strcmp(symptr->identifier, identifier) == 0){
-			if(symptr->before!=NULL){
-				sym_exchg(&symptr);//moving searched symbol one item to the left
-				if(symptr->before==NULL)
-					(*tableptr)->hash_arr[hash_number]=symptr;
-			}
-			return symptr;
-		}
-		symptr=symptr->next;
-	}
-	return NULL;
+ * Zničí parametry symbolu 'symbol
+ */
+void params_destroy(symbol *symbol) {
+    for(int i = 0; i < 255; i++) {
+        if(symbol->param[i] != NULL) {
+            symbol->param[i]->param_name = NULL;
+            symbol->param[i]->type = NIL;
+            symbol->param[i]->next_param = NULL;
+            free(symbol->param[i]);
+            symbol->param[i] = NULL;
+        }
+        else
+            break;
+    }
+    free(symbol->param);
 }
 
-/*
-*Function frees all the parts of symbol structure; if the given symbol doesnt exist it does nothing.
-*/
-void symbol_free(STsymPtr *symptr){
-	if(symptr!=NULL){
-		if ((*symptr)->type == variable){
-			free((*symptr)->div->variable);
-			free((*symptr)->div);
-		}
-		else {
-			free((*symptr)->div->function);
-			free((*symptr)->div);
-		}
-		free(*symptr);
-		*symptr=NULL;
-	}
+void symbols_destroy(symtable *table) {
+    if(table != NULL) {
+        for(int i = 0; i < 255; i++) {
+            if(table->sym[i] != NULL) {
+                if(table->sym[i]->type == FUNCTION) {
+                    params_destroy(table->sym[i]);
+                }
+                table->sym[i]->identifier = NULL;
+                table->sym[i]->type = NIL;
+                table->sym[i]->value = NULL;
+                table->sym[i]->next_sym = NULL;
+                table->sym[i]->prev_sym = NULL;
+            }
+            else
+                continue;
+        }
+    }
 }
 
-/*
-*Function removes a symbol with the given identifier and type. If it doesnt find the symbol, it does nothing.
-*/
-void symbol_remove(STmaintablePtr *tableptr, char *identifier){//function for further calling
+void symbol_delete(symtable *table, char* identifier) {
+	unsigned int hash_num = hash_function(identifier, table->size, SEED);
 
-	unsigned int hash_number = get_hash(identifier, (*tableptr)->sizeoftable);
-	STsymPtr symptr = sym_search_ptr(tableptr, identifier);
-
-	if(symptr!=NULL)
-		(*tableptr)->symbolcount--;
-
-	if(symptr->before == NULL){//if symbol is first
-		(*tableptr)->hash_arr[hash_number]=symptr->next;
-		if(symptr->next!=NULL)//if symbol is not last
-			symptr->next->before=NULL;
-		symbol_free(&symptr);
-		return;
-	}
-	else{//if symbol is not first
-		symptr->before->next=symptr->next;
-		if(symptr->next!=NULL)//if symbol is not last
-			symptr->next->before=symptr->before;
-		symbol_free(&symptr);
-		return;
-	}
+	symbol *sym = search_sym(table, identifier);
+	if(sym != NULL) {
+        if (sym->prev_sym == NULL) {
+            table->sym[hash_num] = sym->next_sym;
+            if (sym->next_sym != NULL) {
+                sym->next_sym->prev_sym = NULL;
+            }
+            free(sym);
+        } else {
+            sym->prev_sym->next_sym = sym->next_sym;
+            if (sym->next_sym != NULL) {
+                sym->next_sym->prev_sym = sym->prev_sym;
+            }
+            free(sym);
+        }
+    }
 }
 
-/*
-*Function frees table and symbols (at the end).
-*/
-void table_delete(STmaintablePtr *tableptr) {//function for further calling
-	if (tableptr != NULL) {
-		STsymPtr symptr, symptr_next;
-		for (unsigned int i = 0; i < (*tableptr)->sizeoftable; i++) {
-			symptr = (*tableptr)->hash_arr[i];
-			while(symptr!=NULL){
-				symptr_next=symptr->next;
-				symbol_free(&symptr);
-				symptr=symptr_next;
-			}
-		}
-
-		free((*tableptr)->hash_arr);
-		(*tableptr)->hash_arr=NULL;
-		free(*tableptr);
-		*tableptr=NULL;
-	}
+unsigned int hash_function(char* target, unsigned int tsize, unsigned int seed) {
+    char c;
+    unsigned int h;
+    h = seed;
+    for( ; ( c=*target )!='\0' ; target++ )
+    {
+        h ^= ( (h << 5) + c + (h >> 2) );
+    }
+    return((unsigned int)((h&0x7fffffff) % tsize));
 }
 
-//Hash function stolen from http://www.seg.rmit.edu.au/code/zwh-ipl/bitwisehash.c
-unsigned int get_hash(char *word, int tsize) {
-	//int tsize = TSIZE;
-	char c;
-	unsigned int h = SEED;
-
-	for( ; ( c=*word )!='\0' ; word++ )
-	{
-		h ^= ( (h << 5) + c + (h >> 2) );
-	}
-	return((unsigned int)((h&0x7fffffff) % tsize));
-}
-
-void printtable(STmaintablePtr *tableptr){
-	printf("-----------------------------\n");
-	for (unsigned int i = 0; i < (*tableptr)->sizeoftable; i++) {
-		STsymPtr symptr = (*tableptr)->hash_arr[i];
-		printf("Index %u: ", i);
-		while(symptr!=NULL){
-			if (symptr->type == function) {
-				printf("\nFunkce;\tID: %s\tAdresa: %p, Return type: %i, NumOfParams: %i", symptr->identifier, symptr, symptr->div->function->returnvalue, symptr->div->function->numberofattr);
-
-				if (symptr->div->function->paramQueue->First!= NULL)   {
-					symptr->div->function->paramQueue->Act=symptr->div->function->paramQueue->First;
-					//for (int i = 1; i <= symptr->div->function->numberofattr; i++)  {
-					for (int i = 1; i <= howManyElementsInQueue(symptr->div->function->paramQueue); i++)  {
-						printf("\nJeji %i. parametr = |%s|", i, symptr->div->function->paramQueue->Act->value);
-						symptr->div->function->paramQueue->Act = symptr->div->function->paramQueue->Act->rptr;
-					}
-				}
-			}
-			else
-				printf("\nPromenna = { ID= |%s|, Adresa = |%p|, Hodnota = |%i|", symptr->identifier, symptr, symptr->div->variable->value.i);
-
-			symptr=symptr->next;
-		}
-		printf("\n");
-	}
+void print_stack() {
+    printf("-----------------------------\n");
+    if(stack != NULL) {
+        for (int i = 0; i <= stack->top; i++) {
+            if (stack->sym_table[i] != NULL) {
+                printf("*** Stack item %d ***\n", i);
+                for (unsigned int j = 0; j < stack->sym_table[i]->size; j++) {
+                    symbol *sym = (symbol *) stack->sym_table[i]->sym[j];
+                    if (sym != NULL) {
+                        printf("ID: %s,\t Type: %d,\t Data: %s\n", sym->identifier, sym->type, sym->value);
+                        if(sym->type == FUNCTION) {
+                            int k = 0;
+                            if(sym->param[k] == NULL) {
+                                printf("No arguments for function %s\n", sym->identifier);
+                                return;
+                            }
+                            while(sym->param[k] != NULL) {
+                                if(sym->param[k]->type == INT) {
+                                    printf("\tParam %d:\t Name: %s,\t Type: INT\n", k, sym->param[k]->param_name);
+                                }
+                                else if(sym->param[k]->type == FLOAT) {
+                                    printf("\tParam %d:\t Name: %s,\t Type: FLOAT\n", k, sym->param[k]->param_name);
+                                }
+                                else if(sym->param[k]->type == FUNCTION) {
+                                    printf("\tParam %d:\t Name: %s,\t Type: FUNCTION\n", k, sym->param[k]->param_name);
+                                }
+                                else if(sym->param[k]->type == STRING) {
+                                    printf("\tParam %d:\t Name: %s,\t Type: STRING\n", k, sym->param[k]->param_name);
+                                }
+                                else if(sym->param[k]->type == NIL){
+                                    printf("\tParam %d:\t Name: %s,\t Type: NIL\n", k, sym->param[k]->param_name);
+                                }
+                                k++;
+                            }
+                        }
+                    } else {
+                        continue;
+                    }
+                }
+                printf("*** Konec stack items %d ***\n\n", i);
+            } else
+                printf("\n0. table\n");
+        }
+    }
+    else {
+        printf("*** THIS IS NOT THE STACK YOU ARE LOOKING FOR ***\n\n");
+    }
+    printf("-----------------------------\n");
 }
