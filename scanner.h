@@ -34,9 +34,9 @@ typedef enum stateMachineStates	{
 typedef enum
 {
     T_COMMA,        ///Comma ,
-    T_RBRACK,       ///Right bracket (
+    T_RBRACK,       ///Right bracket )
     T_EQ_ASSIG,     ///Asign =
-    T_LBRACK,       ///Left bracket )
+    T_LBRACK,       ///Left bracket (
     T_COLON,        ///Colon :
 
     T_EQ_COMP,      ///Compare ==

@@ -158,9 +158,9 @@ void assignTokenType(T_token *out_token, Token in_token) {
         case specialChar:
             if (strcmp(in_token.value, ",") == 0)
                 out_token->type = T_COMMA;
-            else if (strcmp(in_token.value, "(") == 0)
-                out_token->type = T_RBRACK;
             else if (strcmp(in_token.value, ")") == 0)
+                out_token->type = T_RBRACK;
+            else if (strcmp(in_token.value, "(") == 0)
                 out_token->type = T_LBRACK;
             else if(strcmp(in_token.value, ":") == 0)
                 out_token->type = T_COLON;
