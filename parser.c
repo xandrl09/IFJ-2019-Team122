@@ -70,8 +70,16 @@ if (data->token.type != (_type)) errSyn()
 
             GET_TOKEN();
             main_func(data);
+            CHECK_TYPE(T_EOL);
+            GET_TOKEN();
+            while(data->token.type != T_DEDENT)
+            {
+                main_func(data);
+                CHECK_TYPE(T_EOL);
+                GET_TOKEN();
+            }
 
-            CHECK_TYPE(T_DEDENT);
+           //CHECK_TYPE(T_DEDENT);
 
             return main_body(data);
 
@@ -125,13 +133,17 @@ if (data->token.type != (_type)) errSyn()
         case T_INT:
         case T_FLOAT:
         case T_STRING:
-        case T_EOL:
-        case T_PASS:
+
+
             /// pravidlo 38: <main> -> <code> <main_func>
 
             code(data);
             return main_func(data);
-
+        case T_EOL:
+            //pravidlo 36: <main> -> EOL<main>
+            return SYNTAX_OK;
+        case T_PASS:
+            return code(data);
         case T_RETURN:
             /// pravidlo 39: return <expr> <main_func>
             expression(data);
@@ -213,13 +225,17 @@ if (data->token.type != (_type)) errSyn()
         case T_INT:
         case T_FLOAT:
         case T_STRING:
-        case T_EOL:
-        case T_PASS:
+
+
             // pravidlo 8: <main> -> <code> <main>
 
             code(data);
             return main_(data);
-
+        case T_EOL:
+            //pravidlo 36: <main> -> EOL<main>
+            return SYNTAX_OK;
+        case T_PASS:
+            return code(data);
         case T_DEDENT:
             // pravidlo 9: <main> -> e
             return SYNTAX_OK;
@@ -278,7 +294,15 @@ if (data->token.type != (_type)) errSyn()
             CHECK_TYPE(T_INDENT);
             GET_TOKEN();
             main_(data);
-            CHECK_TYPE(T_DEDENT);
+            CHECK_TYPE(T_EOL); //TODO DEDENT PRO VNORENY IF
+            GET_TOKEN();
+            while(data->token.type != T_DEDENT)
+            {
+                main_func(data);
+                CHECK_TYPE(T_EOL);
+                GET_TOKEN();
+            }
+           //CHECK_TYPE(T_DEDENT);
 
             GET_TOKEN();
             CHECK_TYPE(T_ELSE);
@@ -293,9 +317,16 @@ if (data->token.type != (_type)) errSyn()
             GET_TOKEN();
             main_(data);
             CHECK_TYPE(T_EOL);
-
             GET_TOKEN();
-            CHECK_TYPE(T_DEDENT);
+            while(data->token.type != T_DEDENT)
+            {
+                main_func(data);
+                CHECK_TYPE(T_EOL);
+                GET_TOKEN();
+            }
+            //CHECK_TYPE(T_DEDENT);
+
+
             return SYNTAX_OK;
 
         case T_WHILE:
@@ -313,9 +344,14 @@ if (data->token.type != (_type)) errSyn()
             GET_TOKEN();
             main_(data);
             CHECK_TYPE(T_EOL);
-
             GET_TOKEN();
-            CHECK_TYPE(T_DEDENT);
+            while(data->token.type != T_DEDENT)
+            {
+                main_func(data);
+                CHECK_TYPE(T_EOL);
+                GET_TOKEN();
+            }
+            //CHECK_TYPE(T_DEDENT);
             return SYNTAX_OK;
 
         case T_ID:
@@ -323,15 +359,13 @@ if (data->token.type != (_type)) errSyn()
             data->second_token = data->token;
             GET_TOKEN();
             return identif(data);
-        case T_EOL:
-            //pravidlo 36: <main> -> EOL<main>
-            return SYNTAX_OK;
+
 
         case T_PASS:
             //pravidlo 37: <main> -> EOL<main>
             GET_TOKEN();
             CHECK_TYPE(T_EOL);
-            GET_TOKEN();
+
             return SYNTAX_OK;
 
         default:
@@ -426,6 +460,8 @@ if (data->token.type != (_type)) errSyn()
             GET_TOKEN();
             return ins(data);
 
+        case T_EOL:
+            return SYNTAX_OK;
         default:
             errSyn();
             return SYNTAX_ERROR;
@@ -924,10 +960,11 @@ int parse()
 
 
             data->token = *token_init();
-            //(data)->token->data->string == dyn_id_init() ;
+
             (data)->second_token = *token_init();
-    //(data)->second_token->data->string == dyn_id_init() ;
+            (data)->second_token.type = T_NONE;
             (data)->third_token = *token_init();
+            (data)->third_token.type = T_NONE;
 
             //(data)->func_id = token_init();
             //(data)->result = token_init();

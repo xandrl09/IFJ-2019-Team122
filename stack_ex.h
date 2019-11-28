@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include "expresions.h"
-#include "symtable.h"
+//#include "symtable.h"
 #include "main.h"
 
 /**
@@ -28,7 +28,7 @@ typedef struct stack{
 }expression_stack;
 
 
-expression_stack *expression_stack_init();
+void expression_stack_init(expression_stack * target);
 bool expression_stack_empty(expression_stack *target);
 void expression_stack_pop(expression_stack *target);
 void expression_stack_push(expression_stack *target, symbol_enum data);
