@@ -6,17 +6,23 @@
 #define SOURCE_STACK_H
 
 #include "structs.h"
+#include "scanner.h"
 
 Stack initStack();
-int top(Stack stack);
-int pop(Stack *stack);
-void push(Stack *stack, int number);
-void printStackContent(Stack stack);
+int top(Stack target_stack);
+int pop(Stack *target_stack);
+void push(Stack *target_stack, int number);
+void printStackContent(Stack target_stack);
 
 TStack TinitStack();
-Token Ttop(TStack stack);
-Token Tpop(TStack *stack);
-void Tpush(TStack *stack, Token token);
-void printTStackContent(TStack stack);
+Token Ttop(TStack target_stack);
+Token Tpop(TStack *target_stack);
+void Tpush(TStack *target_stack, Token token);
+void printTStackContent(TStack *target_stack);
+
+int precedence(Token *oper);
+void saveToken1(TStack *L);
+void saveToken2(TStack *L);
+TStack infix_2_postfix();
 
 #endif //SOURCE_STACK_H
