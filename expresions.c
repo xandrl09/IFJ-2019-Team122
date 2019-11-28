@@ -11,6 +11,7 @@
 //#include "scanner.h"
 #include "main.h"
 
+expression_stack  e_stack;
 
 typedef enum
 {
@@ -141,14 +142,35 @@ static Precedence_table_index_enum get_precedence_table_index(symbol_enum symbol
 
 
 /**
- * Function function counts number of symbols after stop symbol on stack.
- *
- * @param stop_found Pointer to bool variable which will be changed to true if stop was found else to false.
- * @return Number of characters after stop symbol. Is valid only when stop_found was set to true.
+
  */
-static int num_of_symbols_before_stop(bool *stop_found, expression_stack *stack)
+//static int num_of_symbols_after_stop(bool* stop_found)
+//{
+//    Symbol_stack_item* tmp = symbol_stack_top(&stack);
+//    int count = 0;
+//
+//    while (tmp != NULL)
+//    {
+//        if (tmp->symbol != STOP)
+//        {
+//            *stop_found = false;
+//            count++;
+//        }
+//        else
+//        {
+//            *stop_found = true;
+//            break;
+//        }
+//
+//        tmp = tmp->next;
+//    }
+//
+//    return count;
+//}
+
+static int num_of_symbols_before_stop(bool *stop_found)
 {
-        expression_list* temp = expression_stack_top(stack);
+        expression_list* temp = expression_stack_top(&e_stack);
         int count = 0;
 
         while (true)
@@ -366,7 +388,7 @@ bool  test_rule(int num, expression_list* op1, expression_list* op2, expression_
  * @param data Pointer to table.
  * @return Given exit code.
  */
-static int reduce( expression_stack *stack)
+static int reduce( expression_stack *exp_stack)
 {
 
         expression_list* op1 = NULL;
@@ -376,24 +398,24 @@ static int reduce( expression_stack *stack)
         bool rule;
         bool found = false;
 
-        int count = num_of_symbols_before_stop(&found, stack);
+        int count = num_of_symbols_before_stop(&found);
 
 
         if (count == 1 && found)
         {
-                op1 = stack->top;
+                op1 = exp_stack->top;
                 rule = test_rule(count, op1, NULL, NULL);
         }
         else if (count == 3 && found)
         {
-                op1 = stack->top->next->next;
-                op2 = stack->top->next;
-                op3 = stack->top;
+                op1 = exp_stack->top->next->next;
+                op2 = exp_stack->top->next;
+                op3 = exp_stack->top;
                 rule = test_rule(count, op1, op2, op3);
         }
         else
         {
-            expression_stack_destroy(stack);
+            expression_stack_destroy(exp_stack);
             errSyn();
             return SYNTAX_ERROR;
         }
@@ -401,7 +423,7 @@ static int reduce( expression_stack *stack)
 
         if (!rule)/// rule == false
         {
-            expression_stack_destroy(stack);
+            expression_stack_destroy(exp_stack);
             errSyn();
             return SYNTAX_ERROR;
         }
@@ -409,9 +431,9 @@ static int reduce( expression_stack *stack)
         {
             for (int i = 0; i < count + 1; i++)
             {
-                expression_stack_pop(stack);
+                expression_stack_pop(exp_stack);
             }
-            expression_stack_push(stack, NON_TERM);
+            expression_stack_push(exp_stack, NON_TERM);
         }
 
         return SYNTAX_OK;
@@ -423,12 +445,11 @@ static int reduce( expression_stack *stack)
 
 int expression(MainData* data)
 {
-
 	///initialization of stack and buffer
-        expression_stack *stack = expression_stack_init();
+        expression_stack_init(&e_stack);
 
 	/// end of stack
-        expression_stack_push(stack, DOLLAR);
+        expression_stack_push(&e_stack, DOLLAR);
 
 
         expression_list* top_stack_terminal;
@@ -457,12 +478,12 @@ int expression(MainData* data)
                 }
 
 
-                top_stack_terminal = stack_top_terminal(stack);
+                top_stack_terminal = stack_top_terminal(&e_stack);
 
 
                 if (top_stack_terminal == NULL)
                 {
-                    expression_stack_destroy(stack);
+                    expression_stack_destroy(&e_stack);
                     errInter();
                 }
 
@@ -471,7 +492,7 @@ int expression(MainData* data)
                 {
                 	///shift
                         case S:
-                                insert_after_top_terminal(stack, STOP);
+                                insert_after_top_terminal (&e_stack, STOP);
 
                                 switch(actual_symbol){
                                         case ID:///identificator
@@ -543,7 +564,7 @@ int expression(MainData* data)
                                             break;
                                 }
 
-                        expression_stack_push(stack, actual_symbol);/// push stack
+                        expression_stack_push(&e_stack, actual_symbol);/// push stack
 
 			            /// empty second and thirh token
                         if(data->third_token.type == T_NONE && data->second_token.type == T_NONE)
@@ -555,7 +576,7 @@ int expression(MainData* data)
 
 			/// equal
                         case Q:
-                            expression_stack_push(stack, actual_symbol);
+                            expression_stack_push(&e_stack, actual_symbol);
 
                         /// empty second and thirh token
                         if(data->third_token.type == T_NONE && data->second_token.type == T_NONE)
@@ -567,7 +588,7 @@ int expression(MainData* data)
 
 			/// reduce
                         case R:
-                                reduce( stack);
+                                reduce( &e_stack);
                         break;
 
 			/// error
@@ -578,7 +599,7 @@ int expression(MainData* data)
                                 }
                                 else
                                 {
-                                    expression_stack_destroy(stack);
+                                    expression_stack_destroy(&e_stack);
                                     errSyn();
                                 }
                             break;
@@ -589,20 +610,20 @@ int expression(MainData* data)
 
 
 	/// no end of stack
-        if (expression_stack_empty(stack) == true)
+        if (expression_stack_empty(&e_stack) == true)
         {
-            expression_stack_destroy(stack);
+            expression_stack_destroy(&e_stack);
             errInter();
         }
         
 	/// not reduced symbols
-        expression_list* final_non_terminal = expression_stack_top(stack);
+        expression_list* final_non_terminal = expression_stack_top(&e_stack);
 
         if (final_non_terminal->symbol != NON_TERM)
         {
-            expression_stack_destroy(stack);
+            //expression_stack_destroy(e_stack);
             errSyn();
         }
-    expression_stack_destroy(stack);
+    expression_stack_destroy(&e_stack);
         return SYNTAX_OK;
 }

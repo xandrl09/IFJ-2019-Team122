@@ -9,11 +9,9 @@
  * Inicialization of stack.
  * @return New stack.
  */
-expression_stack *expression_stack_init()
+void expression_stack_init(expression_stack *e_stack)
 {
-    expression_stack *new = malloc(sizeof(expression_stack));
-    new->top = NULL;
-    return new;
+    e_stack->top = NULL;
 }
 
 
@@ -26,6 +24,7 @@ void expression_stack_push(expression_stack *target, symbol_enum data)
 {
     expression_list *item = malloc(sizeof(expression_list));
     item->symbol = data;
+    item->next = target->top;
     target->top = item;
 }
 
