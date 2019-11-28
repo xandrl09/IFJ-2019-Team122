@@ -8,30 +8,25 @@
  * @author Ondřej Andrla <xandrl09@stud.fit.vutbr.cz>
  */
 
-//#pragma once
 
 #include <stdio.h>
-
 #include "parser.h"
 
 #define GET_TOKEN()\
 getParserToken(&data->token)
 
-
 #define CHECK_TYPE(_type)											\
 if (data->token.type != (_type)) errSyn()
 
 
-
-// ==================================================================
-// jednotlive funkce odpovidajici jednotlivym nonterminalum gramatiky
-// ==================================================================
+/// ==================================================================
+/// jednotlive funkce odpovidajici jednotlivym nonterminalum gramatiky
+/// ==================================================================
 
 
  int main_body(MainData* data)
 {
     GET_TOKEN();
-
     switch(data->token.type)
     {
         case T_DEF:
@@ -40,19 +35,17 @@ if (data->token.type != (_type)) errSyn()
             GET_TOKEN();
             CHECK_TYPE(T_ID);
 
-//            // TODO ZKONTROLOVAT
-//            /// pokud již byla funkce definována
-//            if(sym_search(data->table, data->token->data->string))
-//            {
-//                return SEM_ERR_UNDEFINED_VAR;
-//            }
-//            /// uložení funkce do symtable
-//            else
-//            {
-//                data->table->hash_arr = func_add(data->table, data->token->data->string);
-//
-//
-//            }
+            /// pokud již byla funkce definována fixme
+            if(is_in_table( data->table,  data->token.data->string))
+            {
+                errSemDef();
+            }
+            /// uložení funkce do symtable
+            else
+            {
+                create_insert_symbol(data->token.data->string, FUNCTION,  NULL);
+                data->function_name = data->token.data->string;
+            }
 
             GET_TOKEN();
             CHECK_TYPE(T_LBRACK);
@@ -80,7 +73,6 @@ if (data->token.type != (_type)) errSyn()
             }
 
            //CHECK_TYPE(T_DEDENT);
-
             return main_body(data);
 
         case T_IF:
@@ -98,14 +90,12 @@ if (data->token.type != (_type)) errSyn()
         case T_FLOAT:
         case T_STRING:
         case T_EOL:
-            // Pravidlo 2 <main_body> -> <code> <main_body>
-
+           /// Pravidlo 2 <main_body> -> <code> <main_body>
             code(data);
-
             return main_body(data);
 
         case T_EOF:
-            // Pravidlo 3 <main_body> -> e
+            /// Pravidlo 3 <main_body> -> e
             return SYNTAX_OK;
 
         default:
@@ -133,24 +123,24 @@ if (data->token.type != (_type)) errSyn()
         case T_INT:
         case T_FLOAT:
         case T_STRING:
-
-
             /// pravidlo 38: <main> -> <code> <main_func>
-
             code(data);
             return main_func(data);
+
         case T_EOL:
-            //pravidlo 36: <main> -> EOL<main>
+            ///pravidlo 36: <main> -> EOL<main>
             return SYNTAX_OK;
+
         case T_PASS:
             return code(data);
+
         case T_RETURN:
             /// pravidlo 39: return <expr> <main_func>
             expression(data);
-
             return main_func(data);
+
         case T_DEDENT:
-            // pravidlo 40: <main_func> -> e
+            /// pravidlo 40: <main_func> -> e
             return SYNTAX_OK;
 
         default:
@@ -165,14 +155,15 @@ if (data->token.type != (_type)) errSyn()
     switch (data->token.type)
     {
         case T_ID:
-            // pravidlo 4: <def_func_params> -> "ID" <func_param_x>
+            /// pravidlo 4: <def_func_params> -> "ID" <func_param_x>
+            insert_param( data->function_name,  data->token.data->string, STRING);//fixme
 
             GET_TOKEN();
             func_param_x(data);
             return SYNTAX_OK;
 
         case T_RBRACK:
-            // pravidlo 5: <def_func_params> -> e
+            /// pravidlo 5: <def_func_params> -> e
             return SYNTAX_OK;
         default:
             errSyn();
@@ -186,19 +177,17 @@ if (data->token.type != (_type)) errSyn()
     switch (data->token.type)
     {
         case T_COMMA:
-            // pravidlo 6: <func_param_x> -> "," "ID" <func_param_x>
+            /// pravidlo 6: <func_param_x> -> "," "ID" <func_param_x>
 
             GET_TOKEN();
             CHECK_TYPE(T_ID);
+            insert_param( data->function_name,  data->token.data->string, STRING);//fixme
 
-            ///sem se dostaneme pouze pokud funkce nebyla definovana
-
-//            // ULOŽENÍ PARAMETRU FUNKCE
             GET_TOKEN();
-             func_param_x(data);
+            func_param_x(data);
 
         case T_RBRACK:
-             // pravidlo 7: <func_param_x> -> e
+             /// pravidlo 7: <func_param_x> -> e
              return SYNTAX_OK;
         default:
             errSyn();
@@ -225,19 +214,19 @@ if (data->token.type != (_type)) errSyn()
         case T_INT:
         case T_FLOAT:
         case T_STRING:
-
-
-            // pravidlo 8: <main> -> <code> <main>
-
+            /// pravidlo 8: <main> -> <code> <main>
             code(data);
             return main_(data);
+
         case T_EOL:
-            //pravidlo 36: <main> -> EOL<main>
+            ///pravidlo 36: <main> -> EOL<main>
             return SYNTAX_OK;
+
         case T_PASS:
             return code(data);
+
         case T_DEDENT:
-            // pravidlo 9: <main> -> e
+            /// pravidlo 9: <main> -> e
             return SYNTAX_OK;
 
         default:
@@ -259,9 +248,8 @@ if (data->token.type != (_type)) errSyn()
         case T_SUBSTR:
         case T_ORD:
         case T_CHR:
-            // pravidlo 10: <code> -> <inner_func> EOL
+            /// pravidlo 10: <code> -> <inner_func> EOL
             inner_func(data);
-
             GET_TOKEN();
             CHECK_TYPE(T_EOL);
             return SYNTAX_OK;
@@ -269,22 +257,18 @@ if (data->token.type != (_type)) errSyn()
         case T_INT:
         case T_FLOAT:
         case T_STRING:
-            // pravidlo 11: <code> -> <EXPR> EOL
+            /// pravidlo 11: <code> -> <EXPR> EOL
 
             ///samostatně stojící výraz
-
             expression(data);
 
             CHECK_TYPE(T_EOL);
             return SYNTAX_OK;
 
         case T_IF:
-            // pravidlo 12: <code> -> if <expr> : EOL INDENT <main> DEDENT else : EOL INDENT <main>  EOL DEDENT
-
+            /// pravidlo 12: <code> -> if <expr> : EOL INDENT <main> DEDENT else : EOL INDENT <main>  EOL DEDENT
             GET_TOKEN();
-
             expression(data);
-
             CHECK_TYPE(T_COLON);
 
             GET_TOKEN();
@@ -294,16 +278,19 @@ if (data->token.type != (_type)) errSyn()
             CHECK_TYPE(T_INDENT);
             GET_TOKEN();
             main_(data);
-            CHECK_TYPE(T_EOL); //TODO DEDENT PRO VNORENY IF
+            CHECK_TYPE(T_EOL);
             GET_TOKEN();
             while(data->token.type != T_DEDENT)
             {
-                main_func(data);
+                main_(data);
                 CHECK_TYPE(T_EOL);
                 GET_TOKEN();
             }
            //CHECK_TYPE(T_DEDENT);
-
+            if(data->token.type == T_DEDENT)//TODO DEDENT PRO VNORENY IF
+            {
+                GET_TOKEN();
+            }
             GET_TOKEN();
             CHECK_TYPE(T_ELSE);
 
@@ -320,19 +307,17 @@ if (data->token.type != (_type)) errSyn()
             GET_TOKEN();
             while(data->token.type != T_DEDENT)
             {
-                main_func(data);
+                main_(data);
                 CHECK_TYPE(T_EOL);
                 GET_TOKEN();
             }
             //CHECK_TYPE(T_DEDENT);
 
-
             return SYNTAX_OK;
 
         case T_WHILE:
-            // pravidlo 13: <code> -> while <expr> : EOL INDENT <main>   EOL DEDENT
+            /// pravidlo 13: <code> -> while <expr> : EOL INDENT <main>   EOL DEDENT
             GET_TOKEN();
-
             expression(data);
             CHECK_TYPE(T_COLON);
 
@@ -347,7 +332,7 @@ if (data->token.type != (_type)) errSyn()
             GET_TOKEN();
             while(data->token.type != T_DEDENT)
             {
-                main_func(data);
+                main_(data);
                 CHECK_TYPE(T_EOL);
                 GET_TOKEN();
             }
@@ -355,20 +340,21 @@ if (data->token.type != (_type)) errSyn()
             return SYNTAX_OK;
 
         case T_ID:
-            // pravidlo 14: <code> -> ID <identif>
+            /// pravidlo 14: <code> -> ID <identif>
             data->second_token = data->token;
             GET_TOKEN();
             return identif(data);
 
 
         case T_PASS:
-            //pravidlo 37: <main> -> EOL<main>
+            ///pravidlo 37: <main> -> EOL<main>
             GET_TOKEN();
             CHECK_TYPE(T_EOL);
 
             return SYNTAX_OK;
 
         default:
+            errSyn();
             return SYNTAX_ERROR;
     }
 }
@@ -388,20 +374,16 @@ if (data->token.type != (_type)) errSyn()
         case T_SUB:
         case T_MUL:
         case T_DIV:
-            // pravidlo 15: <identif> -> EXPR EOL
+            /// pravidlo 15: <identif> -> EXPR EOL
 
             ///MÁME ULOŽEN 1 TOKEN
-
             ///SAMOSTATNĚ STOJÍCÍ VÝRAZ
-
-
             expression(data);
             return SYNTAX_OK;
 
         case T_LBRACK:
-            // pravidlo 16: <identif> -> (<call_func_params>) EOL
+            /// pravidlo 16: <identif> -> (<call_func_params>) EOL
 
-            //DONE pro kontrolu jesi je funkce deklarovan stačí func_search, což se kontroluje 3 řádky níže
             /// ID je v symtable
 //            if(symtable_search(data->table, data->second_token->data->string) )
 //            {
@@ -443,20 +425,16 @@ if (data->token.type != (_type)) errSyn()
         /// rule 17: <identif> -> = <ins>
 //            if(symtable_search(data->table, data->second_token->data->string) == false)
 //            {
-//                //data->op = new_operator(DEFVAR);
-//                //(data->prog, data->op);
 //            }
 //
 //            data->table->hash_arr = symtable_lookup_add(data->table, data->second_token->data->string);
 //            //data->op = new_operand(data->table->sym);
-//            //(data->prog, data->op);
 //
 //            /// second_token = kam se prirazuje
 //            data->result = data->second_token;
 //            data->second_token->type = T_NONE;
 //
-//            //data->op = new_operator(ASSIGN);
-//            //(data->prog, data->op);
+
             GET_TOKEN();
             return ins(data);
 
@@ -682,8 +660,7 @@ if (data->token.type != (_type)) errSyn()
     switch (data->token.type)
     {
         case T_INPUTS:
-            // pravidlo 26: <inner_func> -> inputs ()
-
+            /// pravidlo 26: <inner_func> -> inputs ()
             GET_TOKEN();
             CHECK_TYPE(T_LBRACK);
             GET_TOKEN();
@@ -692,7 +669,7 @@ if (data->token.type != (_type)) errSyn()
             return SYNTAX_OK;
 
         case T_INPUTI:
-            // pravidlo 28: <inner_func> -> inputi ()
+            /// pravidlo 28: <inner_func> -> inputi ()
             GET_TOKEN();
             CHECK_TYPE(T_LBRACK);
             GET_TOKEN();
@@ -701,7 +678,7 @@ if (data->token.type != (_type)) errSyn()
             return SYNTAX_OK;
 
         case T_INPUTF:
-            // pravidlo 29: <inner_func> -> inputf ()
+            /// pravidlo 29: <inner_func> -> inputf ()
 
             GET_TOKEN();
             CHECK_TYPE(T_LBRACK);
@@ -712,35 +689,13 @@ if (data->token.type != (_type)) errSyn()
 
 
         case T_PRINT:
-            //pravidlo 30: <inner_func> -> print (STRING <term> )
-
+            ///pravidlo 30: <inner_func> -> print (STRING <term> )
 
             GET_TOKEN();
             CHECK_TYPE(T_LBRACK);
-
             GET_TOKEN();
-            if (data->token.type == T_ID) {
-
-
-                GET_TOKEN();
-                term(data);
-
-            } else if (data->token.type == T_STRING || data->token.type == T_INT || data->token.type == T_FLOAT) {
-
-//                if (data->token->type == T_STRING) {
-//                    data->symb->type = STRING;
-//                    data->symb->data->string = data->token->data->string;
-//                } else if (data->token->type == T_INT) {
-//                    data->symb->type = INT;
-//                    data->symb->data->integer = data->token->data->u_int;
-//                } else {
-//                    data->symb->type = FLOAT;
-//                    data->symb->data->flp = data->token->data->u_double;
-//                }
-
-
-                GET_TOKEN();
-                term(data);
+            if (data->token.type == T_ID || data->token.type == T_STRING || data->token.type == T_INT || data->token.type == T_FLOAT )
+            {
             }
             else
             {
@@ -749,30 +704,15 @@ if (data->token.type != (_type)) errSyn()
             }
             GET_TOKEN();
             term(data);
-
-            GET_TOKEN();
-            if (data->token.type != T_RBRACK)
-            {
-                errSyn();
-                return SYNTAX_ERROR;
-            }
             return SYNTAX_OK;
 
-
         case T_LENGTH:
-            //pravidlo 31: <inner_func> -> length (STRING  )
+            ///pravidlo 31: <inner_func> -> length (STRING  )
 
             GET_TOKEN();
             CHECK_TYPE(T_LBRACK);
             GET_TOKEN();
-            if (data->token.type == T_ID)
-            {
-
-                GET_TOKEN();
-                CHECK_TYPE(T_RBRACK);
-                return SYNTAX_OK;
-            }
-            else if( data->token.type == T_STRING)
+            if (data->token.type == T_ID || data->token.type == T_STRING)
             {
 
                 GET_TOKEN();
@@ -781,28 +721,17 @@ if (data->token.type != (_type)) errSyn()
             }
 
         case T_SUBSTR:
-            //pravidlo 32: <inner_func> -> substr (STRING, INT, INT )
+            ///pravidlo 32: <inner_func> -> substr (STRING, INT, INT )
 
             GET_TOKEN();
             CHECK_TYPE(T_LBRACK);
             GET_TOKEN();
             if (data->token.type == T_ID || data->token.type == T_STRING)
             {
-//                if (data->token->type == T_ID)
-//                {
-//                }
-//                else
-//                {
-//                }
-
                 GET_TOKEN();
                 CHECK_TYPE(T_COMMA);
                 GET_TOKEN();
-                if (data->token.type == T_ID)
-                {
-
-                }
-                else if ( data->token.type == T_INT)
+                if (data->token.type == T_ID || data->token.type == T_INT)
                 {
 
                 }
@@ -816,11 +745,7 @@ if (data->token.type != (_type)) errSyn()
                 CHECK_TYPE(T_COMMA);
                 GET_TOKEN();
 
-                if (data->token.type == T_ID)
-                {
-
-                }
-                else if ( data->token.type == T_INT)
+                if (data->token.type == T_ID || data->token.type == T_INT)
                 {
 
                 }
@@ -837,30 +762,17 @@ if (data->token.type != (_type)) errSyn()
 
 
         case T_ORD:
-            //pravidlo 33: <inner_func> -> ord (STRING, INT )
-
-
+            ///pravidlo 33: <inner_func> -> ord (STRING, INT )
             GET_TOKEN();
             CHECK_TYPE(T_LBRACK);
             GET_TOKEN();
             if (data->token.type == T_ID || data->token.type == T_STRING)
             {
-//                if (data->token->type == T_ID)
-//                {
-//                }
-//                else
-//                {
-//                }
-
                 GET_TOKEN();
                 CHECK_TYPE(T_COMMA);
                 GET_TOKEN();
 
-                if (data->token.type == T_ID)
-                {
-
-                }
-                else if ( data->token.type == T_INT)
+                if (data->token.type == T_ID || data->token.type == T_INT)
                 {
 
                 }
@@ -877,22 +789,12 @@ if (data->token.type != (_type)) errSyn()
             }
 
         case T_CHR:
-            //pravidlo 34: <inner_func> -> chr (INT )
-
-
+            ///pravidlo 34: <inner_func> -> chr (INT )
             GET_TOKEN();
             CHECK_TYPE(T_LBRACK);
             GET_TOKEN();
             if (data->token.type == T_ID || data->token.type == T_INT)
             {
-//                if (data->token->type == T_ID)
-//                {
-//
-//                }
-//                else
-//                {
-//                }
-
                 GET_TOKEN();
                 CHECK_TYPE(T_RBRACK);
                 return SYNTAX_OK;
@@ -910,27 +812,10 @@ if (data->token.type != (_type)) errSyn()
     switch (data->token.type)
     {
         case T_COMMA:
-            // pravidlo 35: <term> -> "," STRING <term>
+            /// pravidlo 35: <term> -> "," STRING <term>
             GET_TOKEN();
-            if (data->token.type == T_ID) {
-
-            } else if (data->token.type == T_STRING || data->token.type == T_INT || data->token.type == T_FLOAT) {
-                // operand
-               // data->symb = new_symbol();
-
-//                if (data->token->type == T_STRING) {
-//                    data->symb->type = STRING;
-//                    data->symb->data->string = data->token->data->string;
-//                } else if (data->token->type == T_INT) {
-//                    data->symb->type = INT;
-//                    data->symb->data->integer = data->token->data->u_int;
-//                } else {
-//                    data->symb->type = FLOAT;
-//                    data->symb->data->flp = data->token->data->u_double;
-//                }
-
-               // data->op = new_operand(data->symb);
-                //(data->prog, data->op);
+            if (data->token.type == T_ID || data->token.type == T_STRING || data->token.type == T_INT || data->token.type == T_FLOAT)
+            {
 
             }
             else
@@ -941,7 +826,7 @@ if (data->token.type != (_type)) errSyn()
             return term(data);
 
         case T_RBRACK:
-            // pravidlo 36: <term> -> e
+            /// pravidlo 36: <term> -> e
             return SYNTAX_OK;
         default:
             errSyn();
@@ -955,25 +840,17 @@ int parse()
     int result;
 
     MainData *data;
-    //BST table;
-        data = malloc(sizeof(MainData));
+    data = malloc(sizeof(MainData));
 
+    data->token = *token_init();
+    data->second_token = *token_init();
+    data->second_token.type = T_NONE;
+    data->third_token = *token_init();
+    data->third_token.type = T_NONE;
 
-            data->token = *token_init();
-
-            (data)->second_token = *token_init();
-            (data)->second_token.type = T_NONE;
-            (data)->third_token = *token_init();
-            (data)->third_token.type = T_NONE;
-
-            //(data)->func_id = token_init();
-            //(data)->result = token_init();
-           (data)->table = symtable_init(1); // FIXME
-//            (data)->symb = NULL;
-            (data)->in_function = false;
-            (data)->non_declared_function = false;
-            //(data)->number_of_params = 0;
-
+    //data->table = symtable_init(1000); // FIXME
+    data->function_name = NULL;
+    //(data)->number_of_params = 0;
 
     result = main_body(data);
     return result;

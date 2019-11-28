@@ -34,11 +34,9 @@ typedef struct
 
     char* str;
 
-    bool in_function;			/// Defines if the parser is in function
+    char *function_name;
 
-    bool non_declared_function;	/// Function that has been only defined
 
-    //STsymPtr symb; /// sym
 } MainData;
 
 
