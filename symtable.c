@@ -39,10 +39,10 @@ void init_symtable() {
 /*
  * Inicializuje tabulku symbolů
 */
-symtable* symtable_init(int size) {
+symtable* symtable_init() {
     symtable *table = malloc(sizeof(symtable));
     if (table != NULL) {
-        table->size = size;
+        table->size = 255;
         for(unsigned int i = 0; i < table->size; i++) {
             table->sym[i] = NULL;
         }
@@ -214,7 +214,9 @@ void symtable_resize(symtable *table) {
         tmp->sym[hash_num] = table->sym[i];
     }
     symtable *tmp2 = table;
+    tmp->size = double_size;
     table = tmp;
+
     symtable_delete(tmp2);
 }
 

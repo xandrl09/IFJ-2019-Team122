@@ -49,7 +49,7 @@ typedef struct symtable {
  */
 void init_stack();
 void init_symtable();
-symtable* symtable_init(int size);
+symtable* symtable_init();
 symbol *init_symbol();
 symbol* create_symbol_int(char* identifier, char* value);
 symbol* create_symbol_float(char* identifier, char* value);
