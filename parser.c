@@ -26,11 +26,12 @@ if (data->token.type != (_type)) errSyn()
 
  int main_body(MainData* data)
 {
-    gen_code_from_line(def_line);
+
     GET_TOKEN();
     switch(data->token.type)
     {
         case T_DEF:
+            gen_code_from_line(def_line);
             ///Pravidlo 1: def ID ( <func_params> ) :EOL INDENT <main_func> DEDENT <main_body>
 
             GET_TOKEN();
