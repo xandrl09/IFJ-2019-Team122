@@ -28,8 +28,16 @@ typedef enum
     I_DATA,	            /// 5 i
     I_DOLLAR			/// 6 $
 
-} Precedence_table_index_enum;
+} index_enum;
 
+
+typedef enum
+{
+    S,    /// < SHIFT
+    Q,    /// = EQUAL
+    R,    /// > REDUCE
+    E     /// # ERROR
+} Precedence_table_sign_enum;
 
 
 

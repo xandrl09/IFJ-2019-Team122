@@ -5,6 +5,9 @@
 
 #include "stack_ex.h"
 
+
+#pragma once
+
 /**
  * Inicialization of stack.
  * @return New stack.
@@ -48,10 +51,15 @@ void expression_stack_pop(expression_stack *target)
  */
 expression_list* stack_top_terminal(expression_stack* target)
 {
-    for (expression_list* list = target->top; list != NULL; list = list->next)
+    expression_list* list = target->top;
+    while ( list != NULL )
     {
         if (list->symbol < STOP)
+        {
             return list;
+        }
+
+        list = list->next;
     }
     return NULL;
 }
@@ -60,10 +68,9 @@ expression_list* stack_top_terminal(expression_stack* target)
 /**
  *
  * @param target Pointer to stack.
- * @param symbol
- * @return
+ * @param symb
  */
-bool insert_after_top_terminal(expression_stack* target, symbol_enum symbol)
+void insert_after_top_terminal(expression_stack* target, symbol_enum symb)
 {
     expression_list* previous = NULL;
 
@@ -72,7 +79,7 @@ bool insert_after_top_terminal(expression_stack* target, symbol_enum symbol)
         if (tempo->symbol < STOP)
         {
             expression_list* new_item = (expression_list*)malloc(sizeof(expression_list));
-            new_item->symbol = symbol;
+            new_item->symbol = symb;
 
             if (previous != NULL)
             {
@@ -84,11 +91,9 @@ bool insert_after_top_terminal(expression_stack* target, symbol_enum symbol)
                 new_item->next = target->top;
                 target->top = new_item;
             }
-            return true;
         }
         previous = tempo;
     }
-    return false;
 }
 
 

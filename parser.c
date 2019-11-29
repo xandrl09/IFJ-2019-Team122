@@ -35,17 +35,17 @@ if (data->token.type != (_type)) errSyn()
             GET_TOKEN();
             CHECK_TYPE(T_ID);
 
-            /// pokud již byla funkce definována fixme
-            if(is_in_table( data->table,  data->token.data->string))
-            {
-                errSemDef();
-            }
-            /// uložení funkce do symtable
-            else
-            {
-                create_insert_symbol(data->token.data->string, FUNCTION,  NULL);
-                data->function_name = data->token.data->string;
-            }
+//            /// pokud již byla funkce definována fixme
+//            if(is_in_table( data->table,  data->token.data->string))
+//            {
+//                errSemDef();
+//            }
+//            /// uložení funkce do symtable
+//            else
+//            {
+//                create_insert_symbol(data->token.data->string, FUNCTION,  NULL);
+//                data->function_name = data->token.data->string;
+//            }
 
             GET_TOKEN();
             CHECK_TYPE(T_LBRACK);
@@ -156,7 +156,7 @@ if (data->token.type != (_type)) errSyn()
     {
         case T_ID:
             /// pravidlo 4: <def_func_params> -> "ID" <func_param_x>
-            insert_param( data->function_name,  data->token.data->string, STRING);//fixme
+           // insert_param( data->function_name,  data->token.data->string, STRING);//fixme
 
             GET_TOKEN();
             func_param_x(data);
@@ -181,7 +181,7 @@ if (data->token.type != (_type)) errSyn()
 
             GET_TOKEN();
             CHECK_TYPE(T_ID);
-            insert_param( data->function_name,  data->token.data->string, STRING);//fixme
+           // insert_param( data->function_name,  data->token.data->string, STRING);//fixme
 
             GET_TOKEN();
             func_param_x(data);
@@ -286,12 +286,13 @@ if (data->token.type != (_type)) errSyn()
                 CHECK_TYPE(T_EOL);
                 GET_TOKEN();
             }
-           //CHECK_TYPE(T_DEDENT);
+           CHECK_TYPE(T_DEDENT);
+            GET_TOKEN();
             if(data->token.type == T_DEDENT)//TODO DEDENT PRO VNORENY IF
             {
                 GET_TOKEN();
             }
-            GET_TOKEN();
+
             CHECK_TYPE(T_ELSE);
 
             GET_TOKEN();
@@ -352,7 +353,8 @@ if (data->token.type != (_type)) errSyn()
             CHECK_TYPE(T_EOL);
 
             return SYNTAX_OK;
-
+        case T_EOL:
+            return SYNTAX_OK;
         default:
             errSyn();
             return SYNTAX_ERROR;
