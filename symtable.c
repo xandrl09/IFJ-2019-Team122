@@ -189,13 +189,15 @@ bool is_in_stack(char *identifier) {
 symbol *search_stack(char* identifier) {
 
     for(int i = stack->top; i > 0; i--) {
+        if(stack->sym_table[i] == NULL)
+            return NULL;
         if (is_in_table(stack->sym_table[i], identifier)) {
             symbol *tmp = search_sym(stack->sym_table[i], identifier);
             return tmp;
         } else
             continue;
     }
-    return 0;
+    return NULL;
 }
 
 /*
@@ -520,7 +522,7 @@ void print_stack() {
             if (stack->sym_table[i] != NULL) {
                 printf("*** Stack item %d ***\n", i);
                 for (unsigned int j = 0; j < stack->sym_table[i]->size; j++) {
-                    symbol *sym = (symbol *) stack->sym_table[i]->sym[j];
+                    symbol *sym = stack->sym_table[i]->sym[j];
                     if (sym != NULL) {
                         printf("ID: %s,\t Type: %d,\t Data: %s\n", sym->identifier, sym->type, sym->value);
                         if(sym->type == FUNCTION) {
