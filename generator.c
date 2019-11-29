@@ -26,9 +26,14 @@
 extern tDLList *tokenQueue;
 
 // Stack used to track lines of IFJcode19 that generator cannot print right away
-extern CDStack *code_gen_stack;
+CDStack *code_gen_stack;
 
 TStack postfix_expr;
+char not_rly_a_stack[255];
+int depth = 0;
+int is_inside_while = 0;
+int is_inside_of_func = 0;
+int is_inside_else = 0;
 
 // This queue of tokens is taken from global symtable
 tDLList *global_var_scope;
@@ -43,7 +48,7 @@ int typecheck_jumps_id = 0;
 int else_lbl_id = 0;
 
 int scope_nesting_lvl = 0;
-
+char* current_func_label = "";
 /**
  * @brief  Generates code needed to handle lines like these
  * my_variable = foo(arg1, arg)
@@ -90,10 +95,10 @@ void gen_expression_to_bool()   {
  */
 void gen_while_labels() {
     printf("LABEL &_$WHILE%i\n", while_lbl_id);
-    char end_of_while_cycle [MAX_TOKEN_LEN] = "";
-    sprintf(end_of_while_cycle, "JUMP &_$WHILE%i\nLABEL *_$WHILE%i\n", while_lbl_id, while_lbl_id);
-    while_lbl_id++;
-    CDpush(code_gen_stack, end_of_while_cycle);
+    //char end_of_while_cycle [MAX_TOKEN_LEN] = "";
+    //sprintf(end_of_while_cycle, "JUMP &_$WHILE%i\nLABEL *_$WHILE%i\n", while_lbl_id, while_lbl_id);
+    //while_lbl_id++;
+    //CDpush(code_gen_stack, end_of_while_cycle);
 }
 
 void handle_eof()   {
@@ -189,9 +194,9 @@ int is_relational_op(char* val) {
 void handle_else()  {
     printf("JUMP *else%i\n", else_lbl_id);
     printf("LABEL &else%i\n", else_lbl_id);
-    char tmp[MAX_LINE_LENGTH] = "";
-    sprintf(tmp, "LABEL *else%i\n", else_lbl_id++);
-    CDpush(code_gen_stack, tmp);
+    /*char tmp[MAX_LINE_LENGTH] = "";
+    sprintf(tmp, "LABEL *else%i\n", else_lbl_id);
+    CDpush(code_gen_stack, tmp);*/
 }
 
 
@@ -226,8 +231,9 @@ void handle_return()   {
 
         char* scope = get_variable_scope(local_var_scope->First->rptr->value);
         printf("MOVE LF@_retval %s@%s\n", scope, tokenQueue->First->value);
+        printf("POPFRAME\nRETURN\nLABEL *%s\n", current_func_label);
+        not_rly_a_stack[depth--] = '\0';
     }
-    //  printf("%s", CDpop(&code_gen_stack));
 }
 
 void handle_def() {
@@ -245,12 +251,19 @@ void handle_def() {
     char x [MAX_LINE_LENGTH]= "";
     sprintf(x, "POPFRAME\nRETURN\nLABEL *%s\n", lbl);
 
-    CDpush(code_gen_stack, x);
+//    CDpush(code_gen_stack, x);
 }
 
 void handle_dedent()   {
-    char* kokot = CDpop(code_gen_stack);
-    printf("%s", kokot);
+    if (not_rly_a_stack[depth] == 'w') {
+        printf("JUMP &_$WHILE%i\nLABEL *_$WHILE%i\n", while_lbl_id, while_lbl_id++);
+    }
+    else if (not_rly_a_stack[depth] == 'e')
+        printf("LABEL *else%i\n", else_lbl_id++);
+    if (not_rly_a_stack[depth] == 'd') {
+        printf("POPFRAME\nRETURN\nLABEL *%s\n", current_func_label);
+    }
+    not_rly_a_stack[depth--] = '\0';
 }
 
 /**
@@ -586,7 +599,8 @@ void gen_init() {
 
     generate_header();
     // generate_variables_from_queue(global_var_scope, "GF");
-    //*code_gen_stack = CDinit_stack(result);
+    code_gen_stack = malloc(sizeof(CDStack));
+    CDinit_stack(code_gen_stack);
     postfix_expr = TinitStack();
 }
 
@@ -599,10 +613,12 @@ void gen_code_from_line(line_type line) {
     switch(line)    {
         case def_line:
             scope_nesting_lvl++;
+            current_func_label = tokenQueue->First->value;
             handle_def();
             break;
         case function_call:
             scope_nesting_lvl++;
+            not_rly_a_stack[depth++] = 'd';
             handle_function_call();
             break;
         case function_call_with_assignment:
@@ -616,6 +632,7 @@ void gen_code_from_line(line_type line) {
             handle_if();
             break;
         case else_line:
+            is_inside_else = 1;
             handle_else();
             break;
         case dedent:
@@ -627,6 +644,7 @@ void gen_code_from_line(line_type line) {
             handle_return();
             break;
         case while_line:
+            not_rly_a_stack[depth++] = 'w';
             handle_while();
             break;
         case end_of_feed:

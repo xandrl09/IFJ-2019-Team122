@@ -12,8 +12,8 @@
 
 
 
-CDStack CDinit_stack() {
-    CDStack *stack = malloc(sizeof(CDStack));
+CDStack CDinit_stack(CDStack *stack) {
+    stack = malloc(sizeof(CDStack));
     stack->top = -1;
     return *stack;
 }
@@ -30,7 +30,8 @@ char *CDpop(CDStack *stack) {
 
 
 void CDpush(CDStack *stack, char *line) {
-    stack->arr[++stack->top] = line;
+    strcpy(stack->arr[++stack->top], line);
+    //stack->arr[++stack->top] = line;
 }
 
 

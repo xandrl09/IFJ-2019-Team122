@@ -36,13 +36,8 @@ int main(int argc, char* argv[])	{
     DLInitList(tokenQueue);
     //globalSymTable = init_symtable(10);
 
-//    gen_init();1
-//    getLineOfTokens(tokenQueue);  // calling scanner
-//    gen_code_from_line(def_line); // calling generator
-
-
-    //table_delete(&globalSymTable);
-    DLDisposeList(tokenQueue);
+    gen_init();
+    parse();
     return 0;
 }
 

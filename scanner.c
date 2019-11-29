@@ -54,7 +54,7 @@ int getParserToken(T_token *token) {
     DLSucc(tokenQueue);
 
     if (tokenQueue->Act == NULL) {
-        printQueueContents(tokenQueue);
+        //printQueueContents(tokenQueue);
         getLineOfTokens(tokenQueue);
     }
 }
