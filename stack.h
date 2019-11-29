@@ -23,6 +23,6 @@ void printTStackContent(TStack *target_stack);
 int precedence(Token *oper);
 void saveToken1(TStack *L);
 void saveToken2(TStack *L);
-TStack infix_2_postfix();
+TStack infix_2_postfix(tDLList *queue);
 
 #endif //SOURCE_STACK_H

@@ -65,7 +65,7 @@ void Tpush(TStack *target_stack, Token token) {
 }
 
 void printStackContent(Stack *target_stack) {
-    for(int i = 0; i <= stack->top; i++)   {
+    for(int i = 0; i <= target_stack->top; i++)   {
         if(target_stack->arr[i] == -1)
             return;
         printf("%i: %i\n", i, target_stack->arr[i]);
@@ -119,10 +119,10 @@ void saveToken2(TStack *L) {
 
 }
 
-TStack infix_2_postfix() {
+TStack infix_2_postfix(tDLList *queue) {
     int i = 0;
-
-    tDLList *tmp = tokenQueue;
+    DLFirst(queue);
+    tDLList *tmp = queue;
     Token *token;
     TStack lil_stack = TinitStack();
     TStack infix = TinitStack();
@@ -130,7 +130,7 @@ TStack infix_2_postfix() {
     saveToken1(&lil_stack);
 
     for(int k = 0; k < 255; k++) {
-        if(tmp->Act->type != EoF && tmp->Act->type != EOL) {
+        if(tmp->Act != NULL && tmp->Act->type != EoF && tmp->Act->type != EOL) {
             infix.arr[k] = tmp->Act;
             infix.top++;
             DLSucc(tmp);

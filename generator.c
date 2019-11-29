@@ -33,6 +33,7 @@ int nil_lbl_id = 0;
 int typecheck_jumps_id = 0;
 int else_lbl_id = 0;
 
+int scope_nesting_lvl = 0;
 
 /**
  * @brief  Generates code needed to handle lines like these
@@ -86,6 +87,14 @@ void gen_while_labels() {
     CDpush(code_gen_stack, end_of_while_cycle);
 }
 
+void handle_eof()   {
+    printf("CALL _end\n");
+    printf("LABEL &_$INIT\n");
+    generate_variables_from_queue(global_var_scope, "TF");
+    printf("CALL &_main\n");
+    printf("LABEL _end\n");
+}
+
 // while a > 3:
 void handle_while()    {
     gen_while_labels();
@@ -135,7 +144,7 @@ void handle_if()    {
     }
     postfix_expr = infix_2_postfix(&expression);
     generate_expression();
-
+    //free(&expression);
     if(is_relational) {
         gen_switch_operands();
         gen_assign_types();
@@ -184,7 +193,8 @@ void handle_else()  {
  */
 void handle_assignment()    {
     DLFirst(tokenQueue);
-
+    if(scope_nesting_lvl <= 0)
+        DLInsertLast(global_var_scope, identifier, tokenQueue->First->value, -1);
     tDLList expression = get_expression_queue(2);
     if (tokenQueue->First->rptr->rptr->rptr->type == Operator)
         postfix_expr = infix_2_postfix(&expression);
@@ -208,7 +218,7 @@ void handle_return()   {
         char* scope = get_variable_scope(local_var_scope->First->rptr->value);
         printf("MOVE LF@_retval %s@%s\n", scope, tokenQueue->First->value);
     }
-  //  printf("%s", CDpop(&code_gen_stack));
+    //  printf("%s", CDpop(&code_gen_stack));
 }
 
 void handle_def() {
@@ -431,7 +441,7 @@ void gen_relational_comparison(char* op)    {
 
 void gen_float_int(char* operator)  {
     printf("LABEL $float_int%i\n", typecheck_jumps_id);
-    printf("PUSHS GF@op2\n");
+    printf("PUSHS GF@$op2\n");
     printf("INT2FLOATS\n");
     gen_expression_operation(operator);
     printf("JUMP $type_check_passed%i\n", typecheck_jumps_id);
@@ -490,6 +500,8 @@ void gen_expression_operation(char *operator_value) {
         printf("MULS\n");
     else if (strcmp(operator_value, "/") == 0)
         printf("DIVS\n");
+    else if (strcmp(operator_value, "//") == 0)
+        printf("IDIVS\n");
     else if (strcmp(operator_value, "<") == 0)
         printf("LTS\n");
     else if (strcmp(operator_value, "==") == 0)
@@ -536,23 +548,20 @@ void gen_switch_operands()  {
 /**
  * @brief Generates a header that is same every time
  */
- // TODO - zde jeste musim deklarovat vsechny variables v glovalnim scopu
+// TODO - zde jeste musim deklarovat vsechny variables v glovalnim scopu
 void generate_header() {
     printf(".IFJcode19\n");
     printf("CREATEFRAME\n");
+    printf("CALL &_$INIT\n");
     printf("LABEL &_main\n");
     generate_variables_from_queue(global_var_scope, "TF");
     printf("DEFVAR GF@_result\n");
-    DLInsertLast(global_var_scope, nil, "_result", -1);
     printf("DEFVAR GF@$op1\n");
-    DLInsertLast(global_var_scope, nil, "$op1", -1);
     printf("DEFVAR GF@$op2\n");
-    DLInsertLast(global_var_scope, nil, "$op2", -1);
     printf("DEFVAR GF@$op1type\n");
-    DLInsertLast(global_var_scope, nil, "$op1type", -1);
     printf("DEFVAR GF@$op2type\n");
-    DLInsertLast(global_var_scope, nil, "$op2type", -1);
-    generate_variable("_retval", "TF", global_var_scope);
+    printf("DEFVAR TF@_retval\n");
+    printf("MOVE TF@_retval nil@nil\n");
     printf("PUSHFRAME\n");
 }
 
@@ -567,7 +576,7 @@ void gen_init() {
     DLInitList(global_var_scope);
 
     generate_header();
-   // generate_variables_from_queue(global_var_scope, "GF");
+    // generate_variables_from_queue(global_var_scope, "GF");
     //*code_gen_stack = CDinit_stack(result);
     postfix_expr = TinitStack();
 }
@@ -580,12 +589,15 @@ void gen_code_from_line(line_type line) {
     prepare_line_of_tokens(tokenQueue);
     switch(line)    {
         case def_line:
+            scope_nesting_lvl++;
             handle_def();
             break;
         case function_call:
+            scope_nesting_lvl++;
             handle_function_call();
             break;
         case function_call_with_assignment:
+            scope_nesting_lvl++;
             handle_function_call_with_assignment();
             break;
         case assignment:
@@ -598,18 +610,19 @@ void gen_code_from_line(line_type line) {
             handle_else();
             break;
         case dedent:
+            scope_nesting_lvl--;
             handle_dedent();
             break;
         case return_line:
+            scope_nesting_lvl--;
             handle_return();
             break;
         case while_line:
             handle_while();
             break;
+        case end_of_feed:
+            handle_eof();
         default:
             break;
     }
-    DLDisposeList(global_var_scope);
-    DLDisposeList(local_var_scope);
 }
-

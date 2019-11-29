@@ -27,15 +27,18 @@
  * LABEL $float_int42
  * LABEL $type_check_passed na konci typove kontroly operandu
  * LABEL &else42 a *else42
+ * LABEL &_$INIT
  */
 
 
 
 typedef enum    {
     def_line, function_call, function_call_with_assignment, assignment,
-    if_line, else_line, dedent, return_line, while_line
+    if_line, else_line, dedent, return_line, while_line, end_of_feed
 }line_type;
 
+
+void handle_eof();
 void gen_print_method();
 void gen_init();
 void gen_code_from_line(line_type line);
