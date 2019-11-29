@@ -37,15 +37,7 @@ int precedence_table[7][7] =
  */
 bool  process_rules(int num, expression_list *op1, expression_list *op2, expression_list *op3)
 {
-    if(num == 1)
-    {
-        if (op1->symbol == FLOAT_|| op1->symbol == INT_ || op1->symbol == ID  || op1->symbol == STRING_)
-        {
-            return true;
-        }
-        return false;
-    }
-    else if(num == 3)
+    if(num == 3)
     {
         if (op1->symbol == LEFT_BRACK_ && op2->symbol == NON_TERM && op3->symbol == RIGHT_BRACK_)
             return true;
@@ -67,6 +59,14 @@ bool  process_rules(int num, expression_list *op1, expression_list *op2, express
                 default:
                     return false;/// bad operator
             }
+        }
+        return false;
+    }
+    else if(num == 1)
+    {
+        if (op1->symbol == FLOAT_|| op1->symbol == INT_ || op1->symbol == ID  || op1->symbol == STRING_)
+        {
+            return true;
         }
         return false;
     }
@@ -104,22 +104,22 @@ static int reduce( expression_stack *exp_stack)
     }
 
 
-        if ( count == 1)
-        {
-                op1 = exp_stack->top;
-                rule = process_rules(count, op1, NULL, NULL);
-        }
-        else if ( count == 3 )
-        {
-                op1 = exp_stack->top->next->next; op2 = exp_stack->top->next; op3 = exp_stack->top;
-                rule = process_rules(count, op1, op2, op3);
-        }
-        else
-        {
-            expression_stack_destroy(exp_stack);
-            errSyn();
-            return SYNTAX_ERROR;
-        }
+    if ( count == 3 )
+    {
+        op1 = exp_stack->top->next->next; op2 = exp_stack->top->next; op3 = exp_stack->top;
+        rule = process_rules(count, op1, op2, op3);
+    }
+    else if ( count == 1)
+    {
+        op1 = exp_stack->top;
+        rule = process_rules(count, op1, NULL, NULL);
+    }
+    else
+    {
+        expression_stack_destroy(exp_stack);
+        errSyn();
+        return SYNTAX_ERROR;
+    }
 
         if (!rule)/// rule == false
         {
@@ -159,10 +159,15 @@ static index_enum table_index(symbol_enum symbol)
             return I_MUL_DIV;
 
         case EQ_:
+            return I_REL_OP;
         case NEQ:
+            return I_REL_OP;
         case LEQ:
+            return I_REL_OP;
         case LESS:
+            return I_REL_OP;
         case MEQ:
+            return I_REL_OP;
         case MORE:
             return I_REL_OP;
 
@@ -200,16 +205,6 @@ static symbol_enum token_symb(T_token *token)
 {
     switch (token->type)
     {
-        case T_EQ_COMP:
-            return EQ_;
-        case T_NEQ:
-            return NEQ;
-        case T_LESS_EQ:
-            return LEQ;
-        case T_LESS:
-            return LESS;
-        case T_MORE_EQ:
-            return MEQ;
         case T_MORE:
             return MORE;
         case T_ADD:
@@ -243,6 +238,16 @@ static symbol_enum token_symb(T_token *token)
                     return FLOAT_;
                 case T_STRING:
                     return STRING_;
+                case T_EQ_COMP:
+                    return EQ_;
+                case T_NEQ:
+                    return NEQ;
+                case T_LESS_EQ:
+                    return LEQ;
+                case T_LESS:
+                    return LESS;
+                case T_MORE_EQ:
+                    return MEQ;
                 default:
                     return DOLLAR;
             }
