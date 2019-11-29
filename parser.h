@@ -9,6 +9,9 @@
 
 #pragma once
 
+
+#include "structs.h"
+#include "stack.h"
 #include "scanner.h"
 #include "err.h"
 #include "symtable.h"
@@ -26,6 +29,7 @@ typedef struct
     symtable *table; /// CHECK
 
     T_token token;
+    T_token *ptoken;
     T_token second_token;
     T_token third_token;
 

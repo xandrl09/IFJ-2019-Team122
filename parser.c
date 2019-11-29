@@ -7,9 +7,9 @@
  *
  */
 
+
 #include <stdio.h>
 #include "parser.h"
-#include "generator.h"
 
 #define GET_TOKEN()\
 getParserToken(&data->token)
@@ -30,21 +30,24 @@ if (data->token.type != (_type)) errSyn()
     {
         case T_DEF:
             ///Pravidlo 1: def ID ( <func_params> ) :EOL INDENT <main_func> DEDENT <main_body>
-            gen_code_from_line(def_line);
+
             GET_TOKEN();
             CHECK_TYPE(T_ID);
 
-//            /// pokud již byla funkce definována fixme
-//            if(is_in_table( data->table,  data->token.data->string))
-//            {
-//                errSemDef();
-//            }
-//            /// uložení funkce do symtable
-//            else
-//            {
-//                create_insert_symbol(data->token.data->string, FUNCTION,  NULL);
-//                data->function_name = data->token.data->string;
-//            }
+            //print_stack();
+            //create_insert_symbol(data->second_token.data->string, FUNCTION,  NULL);//jen ojeb v second_token zadna hodnota neni
+            //printf("%d\n",is_in_stack(data->token.data->string));
+            /// pokud již byla funkce definována fixme
+            if(is_in_stack( data->ptoken->data->string))
+            {
+                errSemDef();
+            }
+            /// uložení funkce do symtable
+            else
+            {
+                create_insert_symbol(data->ptoken->data->string, FUNCTION,  NULL);
+                data->function_name = data->ptoken->data->string;
+            }
 
             GET_TOKEN();
             CHECK_TYPE(T_LBRACK);
@@ -135,12 +138,10 @@ if (data->token.type != (_type)) errSyn()
 
         case T_RETURN:
             /// pravidlo 39: return <expr> <main_func>
-            gen_code_from_line(return_line);
             expression(data);
             return main_func(data);
 
         case T_DEDENT:
-            gen_code_from_line(dedent);
             /// pravidlo 40: <main_func> -> e
             return SYNTAX_OK;
 
@@ -157,7 +158,7 @@ if (data->token.type != (_type)) errSyn()
     {
         case T_ID:
             /// pravidlo 4: <def_func_params> -> "ID" <func_param_x>
-           // insert_param( data->function_name,  data->token.data->string, STRING);//fixme
+           insert_param( data->function_name,  data->ptoken->data->string, STRING);//fixme
 
             GET_TOKEN();
             func_param_x(data);
@@ -182,7 +183,7 @@ if (data->token.type != (_type)) errSyn()
 
             GET_TOKEN();
             CHECK_TYPE(T_ID);
-           // insert_param( data->function_name,  data->token.data->string, STRING);//fixme
+           insert_param( data->function_name,  data->ptoken->data->string, STRING);//fixme
 
             GET_TOKEN();
             func_param_x(data);
@@ -227,7 +228,6 @@ if (data->token.type != (_type)) errSyn()
             return code(data);
 
         case T_DEDENT:
-            gen_code_from_line(dedent);
             /// pravidlo 9: <main> -> e
             return SYNTAX_OK;
 
@@ -269,7 +269,6 @@ if (data->token.type != (_type)) errSyn()
 
         case T_IF:
             /// pravidlo 12: <code> -> if <expr> : EOL INDENT <main> DEDENT else : EOL INDENT <main>  EOL DEDENT
-            gen_code_from_line(if_line);
             GET_TOKEN();
             expression(data);
             CHECK_TYPE(T_COLON);
@@ -281,7 +280,10 @@ if (data->token.type != (_type)) errSyn()
             CHECK_TYPE(T_INDENT);
             GET_TOKEN();
             main_(data);
+if(data->token.type != T_DEDENT)
+{
             CHECK_TYPE(T_EOL);
+}
             GET_TOKEN();
             while(data->token.type != T_DEDENT)
             {
@@ -290,13 +292,13 @@ if (data->token.type != (_type)) errSyn()
                 GET_TOKEN();
             }
            CHECK_TYPE(T_DEDENT);
+
             GET_TOKEN();
-            if(data->token.type == T_DEDENT)//TODO DEDENT PRO VNORENY IF
+            while(data->token.type == T_DEDENT)//TODO DEDENT PRO VNORENY IF
             {
                 GET_TOKEN();
             }
 
-            gen_code_from_line(else_line);
             CHECK_TYPE(T_ELSE);
 
             GET_TOKEN();
@@ -308,7 +310,10 @@ if (data->token.type != (_type)) errSyn()
             CHECK_TYPE(T_INDENT);
             GET_TOKEN();
             main_(data);
+            if(data->token.type != T_DEDENT)
+{
             CHECK_TYPE(T_EOL);
+}
             GET_TOKEN();
             while(data->token.type != T_DEDENT)
             {
@@ -322,7 +327,6 @@ if (data->token.type != (_type)) errSyn()
 
         case T_WHILE:
             /// pravidlo 13: <code> -> while <expr> : EOL INDENT <main>   EOL DEDENT
-            gen_code_from_line(while_line);
             GET_TOKEN();
             expression(data);
             CHECK_TYPE(T_COLON);
@@ -390,7 +394,7 @@ if (data->token.type != (_type)) errSyn()
 
         case T_LBRACK:
             /// pravidlo 16: <identif> -> (<call_func_params>) EOL
-            gen_code_from_line(function_call);
+
             /// ID je v symtable
 //            if(symtable_search(data->table, data->second_token->data->string) )
 //            {
@@ -463,8 +467,7 @@ if (data->token.type != (_type)) errSyn()
         case T_INT:
         case T_FLOAT:
         case T_STRING:
-            /// rule 18: <ins> -> EXPR EOL
-            gen_code_from_line(assignment);
+            // rule 18: <ins> -> EXPR EOL
 
             expression(data);
             CHECK_TYPE(T_EOL);
@@ -490,8 +493,7 @@ if (data->token.type != (_type)) errSyn()
     switch (data->token.type)
     {
         case T_LBRACK:
-            /// rule 20: <ins_id> -> <call_func_params> EOL
-            gen_code_from_line(function_call_with_assignment);
+            // rule 20: <ins_id> -> <call_func_params> EOL
 
             ///second_token = function ID
 //            data->func_id = data->second_token;
@@ -564,8 +566,7 @@ if (data->token.type != (_type)) errSyn()
         case T_SUB:
         case T_MUL:
         case T_DIV:
-            /// pravidlo 21: <ins_id> -> EXPR EOL
-            gen_code_from_line(function_call);
+            // pravidlo 21: <ins_id> -> EXPR EOL
 
             data->third_token = data->second_token;
             data->second_token = data->token;
@@ -847,18 +848,21 @@ if (data->token.type != (_type)) errSyn()
 
 int parse()
 {
+    //extern table_stack *stack;
+    init_symtable(255);
     int result;
 
     MainData *data;
     data = malloc(sizeof(MainData));
 
     data->token = *token_init();
+    data->ptoken = &data->token;
     data->second_token = *token_init();
     data->second_token.type = T_NONE;
     data->third_token = *token_init();
     data->third_token.type = T_NONE;
 
-    //data->table = symtable_init(1000); // FIXME
+    data->table = symtable_init(100); // FIXME
     data->function_name = NULL;
     //(data)->number_of_params = 0;
 
