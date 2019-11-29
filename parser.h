@@ -11,7 +11,7 @@
 
 
 #include "structs.h"
-#include "stack.h"
+//#include "stack.h"
 #include "scanner.h"
 #include "err.h"
 #include "symtable.h"

@@ -16,12 +16,12 @@ expression_stack  e_stack;
 int precedence_table[7][7] =
         {
                ///r |+- |*/ | ( | ) | i | $ |
-                { E , S , S , S , R , S , R }, /// r (realtion operators) ==!= <= < >= >
+                { E , S , S , S , R , S , R }, /// r
                 { R , R , S , S , R , S , R }, /// +-
                 { R , R , R , S , R , S , R }, /// */ //
                 { S , S , S , S , Q , S , E }, /// (
                 { R , R , R , E , R , E , R }, /// )
-                { R , R , R , E , R , E , R }, /// i (id, int, double, string)
+                { R , R , R , E , R , E , R }, /// i
                 { S , S , S , S , E , S , E }  /// $
         };
 
@@ -57,7 +57,7 @@ bool  process_rules(int num, expression_list *op1, expression_list *op2, express
                 case MORE:
                     return true;
                 default:
-                    return false;/// bad operator
+                    return false;
             }
         }
         return false;

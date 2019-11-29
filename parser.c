@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include "parser.h"
+#include "generator.h"
 
 #define GET_TOKEN()\
 getParserToken(&data->token)
@@ -25,6 +26,7 @@ if (data->token.type != (_type)) errSyn()
 
  int main_body(MainData* data)
 {
+    gen_code_from_line(def_line);
     GET_TOKEN();
     switch(data->token.type)
     {
@@ -98,6 +100,7 @@ if (data->token.type != (_type)) errSyn()
 
         case T_EOF:
             /// Pravidlo 3 <main_body> -> e
+            gen_code_from_line(end_of_feed);
             return SYNTAX_OK;
 
         default:
@@ -138,10 +141,12 @@ if (data->token.type != (_type)) errSyn()
 
         case T_RETURN:
             /// pravidlo 39: return <expr> <main_func>
+            gen_code_from_line(return_line);
             expression(data);
             return main_func(data);
 
         case T_DEDENT:
+            gen_code_from_line(dedent);
             /// pravidlo 40: <main_func> -> e
             return SYNTAX_OK;
 
@@ -229,6 +234,7 @@ if (data->token.type != (_type)) errSyn()
 
         case T_DEDENT:
             /// pravidlo 9: <main> -> e
+            gen_code_from_line(dedent);
             return SYNTAX_OK;
 
         default:
@@ -269,6 +275,7 @@ if (data->token.type != (_type)) errSyn()
 
         case T_IF:
             /// pravidlo 12: <code> -> if <expr> : EOL INDENT <main> DEDENT else : EOL INDENT <main>  EOL DEDENT
+            gen_code_from_line(if_line);
             GET_TOKEN();
             expression(data);
             CHECK_TYPE(T_COLON);
@@ -298,7 +305,7 @@ if(data->token.type != T_DEDENT)
             {
                 GET_TOKEN();
             }
-
+            gen_code_from_line(else_line);
             CHECK_TYPE(T_ELSE);
 
             GET_TOKEN();
@@ -327,6 +334,7 @@ if(data->token.type != T_DEDENT)
 
         case T_WHILE:
             /// pravidlo 13: <code> -> while <expr> : EOL INDENT <main>   EOL DEDENT
+            gen_code_from_line(while_line);
             GET_TOKEN();
             expression(data);
             CHECK_TYPE(T_COLON);
@@ -395,6 +403,7 @@ if(data->token.type != T_DEDENT)
         case T_LBRACK:
             /// pravidlo 16: <identif> -> (<call_func_params>) EOL
 
+            gen_code_from_line(function_call);
             /// ID je v symtable
 //            if(symtable_search(data->table, data->second_token->data->string) )
 //            {
@@ -468,6 +477,7 @@ if(data->token.type != T_DEDENT)
         case T_FLOAT:
         case T_STRING:
             // rule 18: <ins> -> EXPR EOL
+            gen_code_from_line(assignment);
 
             expression(data);
             CHECK_TYPE(T_EOL);
@@ -494,6 +504,7 @@ if(data->token.type != T_DEDENT)
     {
         case T_LBRACK:
             // rule 20: <ins_id> -> <call_func_params> EOL
+            gen_code_from_line(function_call_with_assignment);
 
             ///second_token = function ID
 //            data->func_id = data->second_token;
@@ -567,6 +578,7 @@ if(data->token.type != T_DEDENT)
         case T_MUL:
         case T_DIV:
             // pravidlo 21: <ins_id> -> EXPR EOL
+            gen_code_from_line(assignment);
 
             data->third_token = data->second_token;
             data->second_token = data->token;
@@ -668,6 +680,7 @@ if(data->token.type != T_DEDENT)
 
  int inner_func(MainData* data)
 {
+    gen_code_from_line(function_call);
     switch (data->token.type)
     {
         case T_INPUTS:
