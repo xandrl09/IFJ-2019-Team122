@@ -1,13 +1,11 @@
 /**
- * Implementace překladače imperativního jazyka IFJ18
+ * Implementace překladače imperativního jazyka IFJ19
  *
- * xscevi00   Ščevik Ľuboš
- * xlinne00   Linner Marek
- * xstoja06   Stojan Martin
- * xbakal01   Bakaľárová Alica
+ * xlinne00     Linner Marek
+ * xstoja06     Stojan Martin
+ * xandrl09     Andrla Ondřej
  *
  */
-
 
 #ifndef IFJ_QUEUE
 #define IFJ_QUEUE

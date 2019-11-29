@@ -1,3 +1,12 @@
+/**
+ * Implementace překladače imperativního jazyka IFJ19
+ *
+ * xlinne00     Linner Marek
+ * xstoja06     Stojan Martin
+ * xandrl09     Andrla Ondřej
+ *
+ */
+
 #include <string.h>
 #include <stdio.h>
 #include "symtable.h"
@@ -39,10 +48,10 @@ void init_symtable() {
 /*
  * Inicializuje tabulku symbolů
 */
-symtable* symtable_init() {
+symtable* symtable_init(int size) {
     symtable *table = malloc(sizeof(symtable));
     if (table != NULL) {
-        table->size = 255;
+        table->size = size;
         for(unsigned int i = 0; i < table->size; i++) {
             table->sym[i] = NULL;
         }
@@ -162,7 +171,7 @@ void TS_pop() {
 /*
  * Zruší stack tabulek symbolů a uvolní paměť
  */
-void stack_destroy() {
+void drop_symtable() {
     for(int i = stack->top; i > 0; i--) {
         TS_pop();
     }

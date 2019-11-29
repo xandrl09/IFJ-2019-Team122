@@ -1,12 +1,11 @@
 /**
- * Project: Implementace překladače imperativního jazyka IFJ19.
+ * Implementace překladače imperativního jazyka IFJ19
  *
- * @brief Expression interface.
+ * xlinne00     Linner Marek
+ * xstoja06     Stojan Martin
+ * xandrl09     Andrla Ondřej
  *
- * @author Ondřej Andrla
  */
-
-
 
 #pragma once
 

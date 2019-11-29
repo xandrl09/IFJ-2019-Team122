@@ -1,11 +1,11 @@
 /**
  * Implementace překladače imperativního jazyka IFJ19
  *
- * xlinne00   Linner Marek
- * xstoja06   Stojan Martin
+ * xlinne00     Linner Marek
+ * xstoja06     Stojan Martin
+ * xandrl09     Andrla Ondřej
  *
  */
-
 
 #include "queue.h"
 #include <stdlib.h>

@@ -1,3 +1,12 @@
+/**
+ * Implementace překladače imperativního jazyka IFJ19
+ *
+ * xlinne00     Linner Marek
+ * xstoja06     Stojan Martin
+ * xandrl09     Andrla Ondřej
+ *
+ */
+
 #include <stdbool.h>
 #include <stdlib.h>
 
@@ -49,13 +58,8 @@ typedef struct symtable {
  */
 void init_stack();
 void init_symtable();
-symtable* symtable_init();
+symtable* symtable_init(int size);
 symbol *init_symbol();
-symbol* create_symbol_int(char* identifier, char* value);
-symbol* create_symbol_float(char* identifier, char* value);
-symbol* create_symbol_function(char* identifier);
-symbol* create_symbol_string(char* identifier, char* value);
-symbol* create_symbol_nil(char* identifier);
 void init_param(symbol *symbol);
 
 /*
@@ -64,7 +68,7 @@ void init_param(symbol *symbol);
 void push_lower_scope();
 void TS_push(symtable *table);
 void TS_pop();
-void stack_destroy();
+void drop_symtable();
 bool is_in_stack(char *identifier);
 symbol *search_stack(char* identifier);
 
@@ -80,7 +84,7 @@ symbol *search_sym(symtable *table, char* identifier);
  * Práce se symboly
  */
 void insert_symbol(symtable *table, symbol *sym);
-void create_insert_symbol(char *identifier,ST_type type, char *value);
+void create_insert_symbol(char *identifier, ST_type type, char *value);
 void symbol_delete(symtable *table, char* identifier);
 void symbols_destroy(symtable *table);
 

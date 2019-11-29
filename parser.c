@@ -1,13 +1,11 @@
 /**
- * Subject: IFJ & IAL
+ * Implementace překladače imperativního jazyka IFJ19
  *
- * Project: Implementation of project IFJ19.
+ * xlinne00     Linner Marek
+ * xstoja06     Stojan Martin
+ * xandrl09     Andrla Ondřej
  *
- * @brief Parser.
- *
- * @author Ondřej Andrla <xandrl09@stud.fit.vutbr.cz>
  */
-
 
 #include <stdio.h>
 #include "parser.h"

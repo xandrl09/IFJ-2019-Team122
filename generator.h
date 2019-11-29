@@ -1,6 +1,11 @@
-//
-// Created by Marek on 11/23/2019.
-//
+/**
+ * Implementace překladače imperativního jazyka IFJ19
+ *
+ * xlinne00     Linner Marek
+ * xstoja06     Stojan Martin
+ * xandrl09     Andrla Ondřej
+ *
+ */
 
 #ifndef PROJEKT_GENERATOR_H
 #define PROJEKT_GENERATOR_H

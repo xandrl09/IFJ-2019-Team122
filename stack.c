@@ -1,6 +1,11 @@
-//
-// Created by Marek Linner on 29.09.2019.
-//
+/**
+ * Implementace překladače imperativního jazyka IFJ19
+ *
+ * xlinne00     Linner Marek
+ * xstoja06     Stojan Martin
+ * xandrl09     Andrla Ondřej
+ *
+ */
 
 #include "scanner.h"
 #include "stack_ex.h"

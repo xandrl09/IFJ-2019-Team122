@@ -1,3 +1,12 @@
+/**
+ * Implementace překladače imperativního jazyka IFJ19
+ *
+ * xlinne00     Linner Marek
+ * xstoja06     Stojan Martin
+ * xandrl09     Andrla Ondřej
+ *
+ */
+
 #include "generator.h"
 #include <stdio.h>
 #include <stdlib.h>
