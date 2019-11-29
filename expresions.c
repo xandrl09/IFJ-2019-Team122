@@ -13,10 +13,9 @@
 
 expression_stack  e_stack;
 
-
 int precedence_table[7][7] =
         {
-                //	  r |+- |*/ | ( | ) | i | $ |
+               ///r |+- |*/ | ( | ) | i | $ |
                 { E , S , S , S , R , S , R }, /// r (realtion operators) ==!= <= < >= >
                 { R , R , S , S , R , S , R }, /// +-
                 { R , R , R , S , R , S , R }, /// */ //
@@ -40,8 +39,7 @@ bool  process_rules(int num, expression_list *op1, expression_list *op2, express
 {
     if(num == 1)
     {
-        /// rule E -> i
-        if (op1->symbol == ID || op1->symbol == INT_ || op1->symbol == FLOAT_ || op1->symbol == STRING_)
+        if (op1->symbol == FLOAT_|| op1->symbol == INT_ || op1->symbol == ID  || op1->symbol == STRING_)
         {
             return true;
         }
@@ -49,8 +47,7 @@ bool  process_rules(int num, expression_list *op1, expression_list *op2, express
     }
     else if(num == 3)
     {
-        /// rule E -> (E)
-        if (op1->symbol == LEFT_BRACKET_ && op2->symbol == NON_TERM && op3->symbol == RIGHT_BRACKET_)
+        if (op1->symbol == LEFT_BRACK_ && op2->symbol == NON_TERM && op3->symbol == RIGHT_BRACK_)
             return true;
         if (op1->symbol == NON_TERM && op3->symbol == NON_TERM)
         {
@@ -169,7 +166,7 @@ static index_enum table_index(symbol_enum symbol)
         case MORE:
             return I_REL_OP;
 
-        case LEFT_BRACKET_:
+        case LEFT_BRACK_:
             return I_LEFT_BRACKET;
 
         case ID:
@@ -182,7 +179,7 @@ static index_enum table_index(symbol_enum symbol)
             return I_DATA;
 
         default:
-            if(symbol == RIGHT_BRACKET_)
+            if(symbol == RIGHT_BRACK_)
             {
                 return I_RIGHT_BRACKET;
             }
@@ -216,9 +213,15 @@ static symbol_enum token_symb(T_token *token)
         case T_MORE:
             return MORE;
         case T_ADD:
-            return PLUS;
         case T_SUB:
-            return MINUS;
+            if(token->type == T_ADD)
+            {
+                return MINUS;
+            }
+            else
+            {
+                return PLUS;
+            }
         case T_MUL:
             return MUL_;
         case T_DIV:
@@ -226,9 +229,9 @@ static symbol_enum token_symb(T_token *token)
         case T_WH_N_DIV:
             return DIV_WH;
         case T_LBRACK:
-            return LEFT_BRACKET_;
+            return LEFT_BRACK_;
         case T_RBRACK:
-            return RIGHT_BRACKET_;
+            return RIGHT_BRACK_;
         default:
             switch(token->type)
             {

@@ -1,10 +1,6 @@
 /**
- * Implementace překladače imperativního jazyka IFJ19
- *
- * xlinne00     Linner Marek
- * xstoja06     Stojan Martin
- * xandrl09     Andrla Ondřej
- *
+ * Author: Ondřej Andrla
+ * datum: 2019
  */
 
 #pragma once
@@ -25,8 +21,8 @@ typedef enum symbol_enum
     LESS,			/// <
     MEQ,			/// >=
     MORE,			/// >
-    LEFT_BRACKET_,	/// (
-    RIGHT_BRACKET_,	/// )
+    LEFT_BRACK_,	/// (
+    RIGHT_BRACK_,	/// )
     ID,		/// ID
     INT_,		/// int
     FLOAT_,	/// double

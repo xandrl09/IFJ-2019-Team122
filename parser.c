@@ -38,16 +38,16 @@ if (data->token.type != (_type)) errSyn()
             //create_insert_symbol(data->second_token.data->string, FUNCTION,  NULL);//jen ojeb v second_token zadna hodnota neni
             //printf("%d\n",is_in_stack(data->token.data->string));
             /// pokud již byla funkce definována fixme
-            if(is_in_stack( data->ptoken->data->string))
-            {
-                errSemDef();
-            }
-            /// uložení funkce do symtable
-            else
-            {
-                create_insert_symbol(data->ptoken->data->string, FUNCTION,  NULL);
-                data->function_name = data->ptoken->data->string;
-            }
+//            if(is_in_stack( data->ptoken->data->string))
+//            {
+//                errSemDef();
+//            }
+//            /// uložení funkce do symtable
+//            else
+//            {
+//                create_insert_symbol(data->ptoken->data->string, FUNCTION,  NULL);
+//                data->function_name = data->ptoken->data->string;
+//            }
 
             GET_TOKEN();
             CHECK_TYPE(T_LBRACK);
