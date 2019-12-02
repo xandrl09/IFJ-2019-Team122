@@ -40,7 +40,7 @@ Stack initStack() {
 TStack TinitStack() {
     int initialStackSize = 255;
     int top = 0;
-    TStack *myStack = malloc(sizeof(Token)* initialStackSize + sizeof(top));
+    TStack *myStack = malloc(sizeof(TStack));
     for(int i = 0; i < initialStackSize; i++) {
         myStack->arr[i] = NULL;
     }

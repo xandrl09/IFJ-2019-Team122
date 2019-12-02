@@ -13,7 +13,7 @@
 #include "structs.h"
 #include <stdlib.h>
 
-CDStack CDinit_stack(CDStack *code_gen_stack);
+CDStack * CDinit_stack();
 char* CDpop(CDStack *stack);
 void CDpush(CDStack *stack, char* line);
 char* CDtop(CDStack stack);

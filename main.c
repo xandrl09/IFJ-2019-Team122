@@ -19,25 +19,28 @@
 #include "generator.h"
 #include "stack_cd.h"
 
-//STmaintablePtr globalSymTable;
 tDLList *tokenQueue;
+CDStack *code_gen_stack;
 
 void evaluateInput(int param)	{
     if (param != 2)	{
-        fprintf(stderr, "Progam failed during the evaluateInput func\n");
+        fprintf(stderr, "Program failed during the evaluateInput func\n");
         	exit(1);
     }
 }
 
 int main(int argc, char* argv[])	{
     tokenQueue = malloc(sizeof(tDLList));
-    //evaluateInput(argc);
+    DLInitList(tokenQueue);
     createScanner(argv[1]);			//argv[1] == path
     DLInitList(tokenQueue);
-    //globalSymTable = init_symtable(10);
-
+    init_symtable();
+    code_gen_stack = CDinit_stack();
     gen_init();
     parse();
+
+    drop_symtable();
+    DLDisposeList(tokenQueue);
     return 0;
 }
 

@@ -17,7 +17,7 @@ Stack initStack();
 int top(Stack target_stack);
 int pop(Stack *target_stack);
 void push(Stack *target_stack, int number);
-void printStackContent(Stack *target_stack);
+void printStackContent(Stack target_stack);
 
 TStack TinitStack();
 Token Ttop(TStack target_stack);

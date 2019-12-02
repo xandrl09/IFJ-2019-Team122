@@ -1,6 +1,6 @@
-OBJS	= main.o err.o expresions.o parser.o queue.o scanner.o stack.o stack_ex.o symtable.o
-SOURCE	= main.c err.c expresions.c parser.c queue.c scanner.c stack.c stack_ex.c symtable.c
-HEADER	= main.h err.h expresions.h parser.h queue.h scanner.h stack.h stack_ex.h structs.h symtable.h
+OBJS	= main.o err.o expresions.o parser.o queue.o scanner.o stack.o stack_ex.o symtable.o stack_cd.o generator.o
+SOURCE	= main.c err.c expresions.c parser.c queue.c scanner.c stack.c stack_ex.c symtable.c stack_cd.c generator.c
+HEADER	= main.h err.h expresions.h parser.h queue.h scanner.h stack.h stack_ex.h structs.h symtable.h stack_cd.h generator.h
 OUT	= proj
 CC	 = gcc
 FLAGS	 = -g -c -Wall
@@ -35,6 +35,12 @@ stack_ex.o: stack_ex.c
 
 symtable.o: symtable.c
 	$(CC) $(FLAGS) symtable.c
+
+generator.o: generator.c
+	$(CC) $(FLAGS) generator.c
+
+stack_cd.o: stack_cd.c
+	$(CC) $(FLAGS) stack_cd.c
 
 
 clean:

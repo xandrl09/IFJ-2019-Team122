@@ -13,7 +13,7 @@
 
 void errLex(){
     printf("Error occurred during lexical analysis!\n");
-    exit(errLEX);
+    //exit(errLEX);
 }
 
 void errSyn(){

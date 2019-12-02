@@ -39,7 +39,7 @@ bool  process_rules(int num, expression_list *op1, expression_list *op2, express
 {
     if(num == 3)
     {
-        if (op1->symbol == LEFT_BRACK_ && op2->symbol == NON_TERM && op3->symbol == RIGHT_BRACK_)
+        if (op1->symbol == LEFT_BRACKET_ && op2->symbol == NON_TERM && op3->symbol == RIGHT_BRACKET_)
             return true;
         if (op1->symbol == NON_TERM && op3->symbol == NON_TERM)
         {
@@ -171,7 +171,7 @@ static index_enum table_index(symbol_enum symbol)
         case MORE:
             return I_REL_OP;
 
-        case LEFT_BRACK_:
+        case LEFT_BRACKET_:
             return I_LEFT_BRACKET;
 
         case ID:
@@ -184,7 +184,7 @@ static index_enum table_index(symbol_enum symbol)
             return I_DATA;
 
         default:
-            if(symbol == RIGHT_BRACK_)
+            if(symbol == RIGHT_BRACKET_)
             {
                 return I_RIGHT_BRACKET;
             }
@@ -224,9 +224,9 @@ static symbol_enum token_symb(T_token *token)
         case T_WH_N_DIV:
             return DIV_WH;
         case T_LBRACK:
-            return LEFT_BRACK_;
+            return LEFT_BRACKET_;
         case T_RBRACK:
-            return RIGHT_BRACK_;
+            return RIGHT_BRACKET_;
         default:
             switch(token->type)
             {
