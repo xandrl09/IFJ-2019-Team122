@@ -812,7 +812,6 @@ void getLineOfTokens(tDLList *tokenQueue) {
     }
     handleEOF(tokenQueue, buffer, &currentState, positionInLine);
     tokenQueue->Act = tokenQueue->First;
-    printQueueContents(tokenQueue);
 }
 
 
