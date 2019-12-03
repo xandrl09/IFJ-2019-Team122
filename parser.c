@@ -30,7 +30,7 @@ if (data->token.type != (_type)) errSyn()
     switch(data->token.type)
     {
         case T_DEF:
-            gen_code_from_line(def_line);
+
             ///Pravidlo 1: def ID ( <func_params> ) :EOL INDENT <main_func> DEDENT <main_body>
 
             GET_TOKEN();
@@ -53,6 +53,7 @@ if (data->token.type != (_type)) errSyn()
 
             GET_TOKEN();
             def_func_params(data);
+            gen_code_from_line(def_line);
 
             GET_TOKEN();
             CHECK_TYPE(T_COLON);
@@ -73,7 +74,6 @@ if (data->token.type != (_type)) errSyn()
                 GET_TOKEN();
             }
 
-           //CHECK_TYPE(T_DEDENT);
             return main_body(data);
 
         case T_IF:
@@ -138,12 +138,12 @@ if (data->token.type != (_type)) errSyn()
 
         case T_RETURN:
             /// pravidlo 39: return <expr> <main_func>
-            gen_code_from_line(return_line);
+            //gen_code_from_line(return_line);
             expression(data);
             return main_func(data);
 
         case T_DEDENT:
-            gen_code_from_line(dedent);
+            gen_code_from_line(dedent);//fixme
             /// pravidlo 40: <main_func> -> e
             return SYNTAX_OK;
 
@@ -160,7 +160,7 @@ if (data->token.type != (_type)) errSyn()
     {
         case T_ID:
             /// pravidlo 4: <def_func_params> -> "ID" <func_param_x>
-           insert_param( data->function_name,  data->ptoken->data->string, STRING);//fixme
+           //insert_param( data->function_name,  data->ptoken->data->string, STRING);//fixme
 
             GET_TOKEN();
             func_param_x(data);
@@ -185,7 +185,7 @@ if (data->token.type != (_type)) errSyn()
 
             GET_TOKEN();
             CHECK_TYPE(T_ID);
-           insert_param( data->function_name,  data->ptoken->data->string, STRING);//fixme
+           //insert_param( data->function_name,  data->ptoken->data->string, STRING);//fixme
 
             GET_TOKEN();
             func_param_x(data);
@@ -231,7 +231,7 @@ if (data->token.type != (_type)) errSyn()
 
         case T_DEDENT:
             /// pravidlo 9: <main> -> e
-            gen_code_from_line(dedent);
+            gen_code_from_line(dedent);//fixme
             return SYNTAX_OK;
 
         default:
@@ -272,10 +272,12 @@ if (data->token.type != (_type)) errSyn()
 
         case T_IF:
             /// pravidlo 12: <code> -> if <expr> : EOL INDENT <main> DEDENT else : EOL INDENT <main>  EOL DEDENT
-            gen_code_from_line(if_line);
+            
             GET_TOKEN();
             expression(data);
+
             CHECK_TYPE(T_COLON);
+gen_code_from_line(if_line);
 
             GET_TOKEN();
             CHECK_TYPE(T_EOL);
@@ -302,18 +304,22 @@ if(data->token.type != T_DEDENT)
             {
                 GET_TOKEN();
             }
-            gen_code_from_line(else_line);
+           
             CHECK_TYPE(T_ELSE);
-
+//gen_code_from_line(else_line);
             GET_TOKEN();
+
             CHECK_TYPE(T_COLON);
+
             GET_TOKEN();
             CHECK_TYPE(T_EOL);
-
+ 
             GET_TOKEN();
             CHECK_TYPE(T_INDENT);
             GET_TOKEN();
+
             main_(data);
+
             if(data->token.type != T_DEDENT)
 {
             CHECK_TYPE(T_EOL);
@@ -331,11 +337,12 @@ if(data->token.type != T_DEDENT)
 
         case T_WHILE:
             /// pravidlo 13: <code> -> while <expr> : EOL INDENT <main>   EOL DEDENT
-            gen_code_from_line(while_line);
+            
             GET_TOKEN();
             expression(data);
-            CHECK_TYPE(T_COLON);
 
+            CHECK_TYPE(T_COLON);
+gen_code_from_line(while_line);
             GET_TOKEN();
             CHECK_TYPE(T_EOL);
 
@@ -400,7 +407,7 @@ if(data->token.type != T_DEDENT)
         case T_LBRACK:
             /// pravidlo 16: <identif> -> (<call_func_params>) EOL
 
-            gen_code_from_line(function_call);
+            
             /// ID je v symtable
 //            if(symtable_search(data->table, data->second_token->data->string) )
 //            {
@@ -430,10 +437,10 @@ if(data->token.type != T_DEDENT)
 //                    return SEM_ERR_UNDEFINED_VAR;
 //                }
 //            }
-
+GET_TOKEN();
             call_func_params(data);
-
-            //GET_TOKEN();
+gen_code_from_line(function_call);
+            GET_TOKEN();
             CHECK_TYPE(T_EOL);
 
             return SYNTAX_OK;
@@ -474,9 +481,10 @@ if(data->token.type != T_DEDENT)
         case T_FLOAT:
         case T_STRING:
             // rule 18: <ins> -> EXPR EOL
-            gen_code_from_line(assignment);
-
+           
+gen_code_from_line(assignment);
             expression(data);
+
             CHECK_TYPE(T_EOL);
 
             return SYNTAX_OK;
@@ -501,8 +509,12 @@ if(data->token.type != T_DEDENT)
     {
         case T_LBRACK:
             // rule 20: <ins_id> -> <call_func_params> EOL
-            gen_code_from_line(function_call_with_assignment);
-
+            
+GET_TOKEN();
+            call_func_params(data);
+gen_code_from_line(function_call_with_assignment);
+            GET_TOKEN();
+            CHECK_TYPE(T_EOL);
             ///second_token = function ID
 //            data->func_id = data->second_token;
 //            data->second_token->type = T_NONE;
@@ -538,29 +550,29 @@ if(data->token.type != T_DEDENT)
 //                }
 //            }
 
-            if(data->token.type == T_ID)
-            {
+           // if(data->token.type == T_ID)
+            //{
                 /// kontrola zda je parametr v parametrech funkce
 //                 if(arg_search(data->table, data->func_id->data->string, data->token->data->string) == false)return SEM_ERR_WRONG_FUNC_PARAMS ;
 //
 //                 data->number_of_params = 1;
-                GET_TOKEN();
-                call_func_param_x(data);
+                //GET_TOKEN();
+                //call_func_param_x(data);
 
                 ///kontrola poctu parametru
 //                Symbol* s = func_add(data->table, data->func_id->data->string);
 //                int i = arg_count(s);
 //                if(data->number_of_params != i)return SEM_ERR_WRONG_FUNC_PARAMS;
-            }
-            else
-            {
-                GET_TOKEN();
-                call_func_params(data);
-            }
+            //}
+           // else
+           // {
+              //  GET_TOKEN();
+               // call_func_params(data);
+           // }
 
 
-            GET_TOKEN();
-            CHECK_TYPE(T_EOL);
+            //GET_TOKEN();
+            //CHECK_TYPE(T_EOL);
 
             return SYNTAX_OK;
 
@@ -575,12 +587,13 @@ if(data->token.type != T_DEDENT)
         case T_MUL:
         case T_DIV:
             // pravidlo 21: <ins_id> -> EXPR EOL
-            gen_code_from_line(assignment);
+           
 
             data->third_token = data->second_token;
             data->second_token = data->token;
 
             expression(data);
+ //gen_code_from_line(assignment);
             CHECK_TYPE(T_EOL);
             return SYNTAX_OK;
 
@@ -611,7 +624,7 @@ if(data->token.type != T_DEDENT)
 //            int i = arg_count(s);
 //            if(data->number_of_params != i)return SEM_ERR_WRONG_FUNC_PARAMS;
 
-            CHECK_TYPE(T_RBRACK);
+            //CHECK_TYPE(T_RBRACK);
             return SYNTAX_OK;
 
         case T_RBRACK:
@@ -677,15 +690,17 @@ if(data->token.type != T_DEDENT)
 
  int inner_func(MainData* data)
 {
-    gen_code_from_line(function_call);
+ //gen_code_from_line(function_call);   
     switch (data->token.type)
     {
         case T_INPUTS:
+
             /// pravidlo 26: <inner_func> -> inputs ()
             GET_TOKEN();
             CHECK_TYPE(T_LBRACK);
             GET_TOKEN();
             CHECK_TYPE(T_RBRACK);
+
 
             return SYNTAX_OK;
 
