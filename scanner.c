@@ -210,7 +210,7 @@ void appendToString(char c, char string[], enum stateMachineStates state) {
 void returnLastCharToInput(char *buffer, char receivedChar) {
     if (receivedChar == '\r')
         return;
-    ungetc(receivedChar, inputFile);
+    return_char(receivedChar);
     sliceString(buffer, strlen(buffer) - 1);
 }
 
@@ -364,15 +364,15 @@ char *handleEscapeSequence(char receivedChar, char *buffer) {
         strcat(buffer, "\'");
     } else if (receivedChar == 'x') {
         char input[3] = {0, 0, 0};
-        input[0] = (char) fgetc(inputFile);
+        input[0] = (char) get_next_char();
         char exp[3] = {0, 0, 0};
         if (isHexNum(input[0])) {
             exp[0] = input[0];
-            input[1] = (char) fgetc(inputFile);
+            input[1] = (char) get_next_char();
             if (isHexNum(input[1])) {   //both nums are hexdec
                 exp[1] = input[1];
             } else
-                ungetc(input[1], inputFile);
+                return_char(input[1]);
 
             int resInt = strtol(exp, NULL, 16);
             char resChar[12];   //every integer should fit in this
@@ -452,6 +452,10 @@ int isUppercaseLetter(char c) {
     return 0;
 }
 
+int isOperatorChar(char c)  {
+    return (c == '+' || c == '-' || c == '/' || c == '*');
+}
+
 int isOperator(char *word) {
     for (int i = 0; i < NUMBER_OF_OPERATORS; i++) {
         if (strcmp(word, operators[i]) == 0)
@@ -484,7 +488,7 @@ void runToEndOfDocString(char *buffer) {
     int cnt = 1;
     while(1)    {
         previousChar = receivedChar;
-        receivedChar = (char) fgetc(inputFile);
+        receivedChar = (char) get_next_char();
         if (is_escape_sequence(previousChar, receivedChar))
             handleEscapeSequence(receivedChar, buffer);
         else
@@ -496,27 +500,20 @@ void runToEndOfDocString(char *buffer) {
         if(cnt == 3)
             break;
     }
-        // run to next "
-        /*while ((receivedChar = (char) fgetc(inputFile)) != '"') {
-            appendToString(receivedChar, buffer, STATE_DOCSTRING);
-        }
-         appendToString(receivedChar, buffer, STATE_DOCSTRING);
-        int cnt = 1;
-        while (1) {
-            previousChar = receivedChar;
-            receivedChar = (char) fgetc(inputFile);
-            appendToString(receivedChar, buffer, STATE_DOCSTRING);
-            if (previousChar == '\\')
-                handleEscapeSequence(receivedChar, buffer);
-            if (receivedChar != '"')
-                cnt = 0;
-            else
-                cnt++;
-            if (cnt == 3) {
-                found = 1;
-                break;
-            }
-        }*/
+}
+
+void return_char(char c) {
+    if (USING_PROG_ARGS)
+        ungetc(c, inputFile);
+    else
+        ungetc(c, stdin);
+}
+
+char get_next_char()    {
+    if (USING_PROG_ARGS)
+        return (char) getc(inputFile);
+    else
+        return (char) getchar();
 }
 
 // takes care of indentation at the beginning of input's line
@@ -532,7 +529,7 @@ int handleIndentation(char receivedChar, tDLList *queue) {
         res += generateDEDENTTokens(queue, 0);
     } else {
         indentationLevel++;
-        while ((receivedChar = (char) fgetc(inputFile)) == ' ') {
+        while ((receivedChar = get_next_char()) == ' ') {
             indentationLevel++;
         }
         if (receivedChar == '#')
@@ -540,7 +537,7 @@ int handleIndentation(char receivedChar, tDLList *queue) {
         else if (receivedChar == '"') {
             return -2;
         } else
-            ungetc(receivedChar, inputFile);
+            return_char(receivedChar);
 
         res += generateIndentationTokens(indentationLevel, queue);
     }
@@ -590,7 +587,7 @@ void getLineOfTokens(tDLList *tokenQueue) {
     int handledIndentation = 0;
     int blockCommentFlag = 0;
 
-    while ((receivedChar = (char) fgetc(inputFile)) != EOF) {
+    while ((receivedChar = get_next_char()) != EOF) {
         if (receivedChar == '\r')
             continue;
         if (!isViableChar(receivedChar) && currentState != STATE_STRING
@@ -679,6 +676,10 @@ void getLineOfTokens(tDLList *tokenQueue) {
                     saveTokenAndReset(tokenQueue, integer, buffer, &currentState, positionInLine++);
                 }
                 else if (isSpecialChar(receivedChar)) {
+                    returnLastCharToInput(buffer, receivedChar);
+                    saveTokenAndReset(tokenQueue, integer, buffer, &currentState, positionInLine++);
+                }
+                else if (isOperatorChar(receivedChar))    {
                     returnLastCharToInput(buffer, receivedChar);
                     saveTokenAndReset(tokenQueue, integer, buffer, &currentState, positionInLine++);
                 }
@@ -811,6 +812,7 @@ void getLineOfTokens(tDLList *tokenQueue) {
     }
     handleEOF(tokenQueue, buffer, &currentState, positionInLine);
     tokenQueue->Act = tokenQueue->First;
+    printQueueContents(tokenQueue);
 }
 
 

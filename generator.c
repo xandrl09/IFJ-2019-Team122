@@ -389,7 +389,7 @@ char* get_variable_scope(char* identifier)  {
  *  LABEL $type_check_passed
  */
 void generate_expression() {
-    int i = 1;
+    int i = 0;
     printf("CLEARS\n");
     Token token;
     while (postfix_expr.arr[i] != NULL) {
@@ -470,6 +470,8 @@ void gen_ops_are_string(char *operator_value)   {
     printf("POPS GF@$op1\n");
     if (strcmp(operator_value, "+") == 0)
         printf("CONCAT GF@_result GF@$op1 GF@$op2\n");
+    else
+        printf("EXIT int@4\n");
     printf("PUSHS GF@_result\n");
 }
 
@@ -482,14 +484,14 @@ void gen_ops_are_float(char *operator_value) {
 
 void gen_op1_is_string()    {
     printf("LABEL $op1_is_string%i\n", typecheck_jumps_id);
-    printf("JUMPIFEQ $ops_are_string%i GF@op2type string@string\n", typecheck_jumps_id);
+    printf("JUMPIFEQ $ops_are_string%i GF@$op2type string@string\n", typecheck_jumps_id);
     printf("EXIT int@4\n");
 }
 
 void gen_op1_is_int()  {
     printf("LABEL $op1_is_int%i\n", typecheck_jumps_id);
-    printf("JUMPIFEQ $ops_are_int%i GF@op2type string@int\n", typecheck_jumps_id);
-    printf("JUMPIFEQ $int_float%i GF@op2type string@float\n", typecheck_jumps_id);
+    printf("JUMPIFEQ $ops_are_int%i GF@$op2type string@int\n", typecheck_jumps_id);
+    printf("JUMPIFEQ $int_float%i GF@$op2type string@float\n", typecheck_jumps_id);
     printf("EXIT int@4\n"); // in case op1 is int and op2 is string
 }
 
@@ -535,9 +537,9 @@ void gen_op1_is_float() {
    EXIT int@4
  */
 void gen_typecheck_jumps()  {
-    printf("JUMPIFEQ op1_is_int%i GF@op1type string@int\n", typecheck_jumps_id);
-    printf("JUMPIFEQ op1_is_float%i GF@op1type string@float\n", typecheck_jumps_id);
-    printf("JUMPIFEQ op1_is_string%i GF@op1type string@string\n", typecheck_jumps_id);
+    printf("JUMPIFEQ $op1_is_int%i GF@$op1type string@int\n", typecheck_jumps_id);
+    printf("JUMPIFEQ $op1_is_float%i GF@$op1type string@float\n", typecheck_jumps_id);
+    printf("JUMPIFEQ $op1_is_string%i GF@$op1type string@string\n", typecheck_jumps_id);
     printf("EXIT int@4\n");
 }
 

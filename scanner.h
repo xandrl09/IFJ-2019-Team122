@@ -16,6 +16,7 @@
 #define NUMBER_OF_DELIMITERS 3
 
 #define MAX_TOKEN_LEN 255
+#define USING_PROG_ARGS 1
 
 
 // In case you want the scanner to scan the whole file, set this value to 1
@@ -135,6 +136,9 @@ int checkExponent (char* buffer);
 int handleIndentation(char receivedChar, tDLList *queue);
 int generateIndentationTokens(int i, tDLList *queue);
 int generateDEDENTTokens(tDLList *queue, int i);
+
+char get_next_char();
+void return_char(char c);
 
 int isBuiltInFunc(char* string);
 
