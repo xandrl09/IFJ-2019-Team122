@@ -257,6 +257,7 @@ if (data->token.type != (_type)) errSyn()
             inner_func(data);
             GET_TOKEN();
             CHECK_TYPE(T_EOL);
+gen_code_from_line(function_call);
             return SYNTAX_OK;
 
         case T_INT:
@@ -304,9 +305,9 @@ if(data->token.type != T_DEDENT)
             {
                 GET_TOKEN();
             }
-           
+         
             CHECK_TYPE(T_ELSE);
-//gen_code_from_line(else_line);
+
             GET_TOKEN();
 
             CHECK_TYPE(T_COLON);
@@ -319,7 +320,7 @@ if(data->token.type != T_DEDENT)
             GET_TOKEN();
 
             main_(data);
-
+ 
             if(data->token.type != T_DEDENT)
 {
             CHECK_TYPE(T_EOL);
@@ -332,7 +333,7 @@ if(data->token.type != T_DEDENT)
                 GET_TOKEN();
             }
             //CHECK_TYPE(T_DEDENT);
-
+gen_code_from_line(else_line); 
             return SYNTAX_OK;
 
         case T_WHILE:
