@@ -15,7 +15,7 @@ expression_stack  e_stack;
 
 int precedence_table[7][7] =
         {
-                ///r |+- |*/ | ( | ) | i | $ |
+               ///r |+- |*/ | ( | ) | i | $ |
                 { E , S , S , S , R , S , R }, /// r
                 { R , R , S , S , R , S , R }, /// +-
                 { R , R , R , S , R , S , R }, /// */ //
@@ -39,7 +39,7 @@ bool  process_rules(int num, expression_list *op1, expression_list *op2, express
 {
     if(num == 3)
     {
-        if (op1->symbol == LEFT_BRACKET_ && op2->symbol == NON_TERM && op3->symbol == RIGHT_BRACKET_)
+        if (op1->symbol == LEFT_BRACK_ && op2->symbol == NON_TERM && op3->symbol == RIGHT_BRACK_)
             return true;
         if (op1->symbol == NON_TERM && op3->symbol == NON_TERM)
         {
@@ -84,11 +84,11 @@ bool  process_rules(int num, expression_list *op1, expression_list *op2, express
  */
 static int reduce( expression_stack *exp_stack)
 {
-    expression_list* op1 = NULL; expression_list* op2 = NULL; expression_list* op3 = NULL;
-    bool rule;
+        expression_list* op1 = NULL; expression_list* op2 = NULL; expression_list* op3 = NULL;
+        bool rule;
 
-    int count = 0;
-    expression_list* temp = expression_stack_top(&e_stack);
+        int count = 0;
+        expression_list* temp = expression_stack_top(&e_stack);
 
     while (true)
     {
@@ -121,22 +121,22 @@ static int reduce( expression_stack *exp_stack)
         return SYNTAX_ERROR;
     }
 
-    if (!rule)/// rule == false
-    {
-        expression_stack_destroy(exp_stack);
-        errSyn();
-        return SYNTAX_ERROR;
-    }
-    else
-    {
-        for (int i = 0; i < count + 1; i++)
+        if (!rule)/// rule == false
         {
-            expression_stack_pop(exp_stack);
+            expression_stack_destroy(exp_stack);
+            errSyn();
+            return SYNTAX_ERROR;
         }
-        expression_stack_push(exp_stack, NON_TERM);
-    }
+        else
+        {
+            for (int i = 0; i < count + 1; i++)
+            {
+                expression_stack_pop(exp_stack);
+            }
+            expression_stack_push(exp_stack, NON_TERM);
+        }
 
-    return 0;
+        return 0;
 }
 
 
@@ -171,7 +171,7 @@ static index_enum table_index(symbol_enum symbol)
         case MORE:
             return I_REL_OP;
 
-        case LEFT_BRACKET_:
+        case LEFT_BRACK_:
             return I_LEFT_BRACKET;
 
         case ID:
@@ -184,7 +184,7 @@ static index_enum table_index(symbol_enum symbol)
             return I_DATA;
 
         default:
-            if(symbol == RIGHT_BRACKET_)
+            if(symbol == RIGHT_BRACK_)
             {
                 return I_RIGHT_BRACKET;
             }
@@ -224,9 +224,9 @@ static symbol_enum token_symb(T_token *token)
         case T_WH_N_DIV:
             return DIV_WH;
         case T_LBRACK:
-            return LEFT_BRACKET_;
+            return LEFT_BRACK_;
         case T_RBRACK:
-            return RIGHT_BRACKET_;
+            return RIGHT_BRACK_;
         default:
             switch(token->type)
             {
@@ -262,96 +262,96 @@ static symbol_enum token_symb(T_token *token)
  */
 int expression(MainData* data)
 {
-    ///initialization of stack and buffer
-    expression_stack_init(&e_stack);
+	///initialization of stack and buffer
+        expression_stack_init(&e_stack);
 
-    /// end of stack
-    expression_stack_push(&e_stack, DOLLAR);
+	/// end of stack
+        expression_stack_push(&e_stack, DOLLAR);
 
-    expression_list* top_terminal;
-    symbol_enum actual_token;
+        expression_list* top_terminal;
+        symbol_enum actual_token;
 
-    bool ending = false;
+        bool ending = false;
 
-    do
-    {
-        /// control second and third token
-        /// control is because
-        /// T_NONE is like NULL
-        if(data->third_token.type != T_NONE)
+        do
         {
-            actual_token = token_symb(&data->third_token);
-            data->third_token.type = T_NONE;
-        }
-        else if(data->second_token.type != T_NONE)
-        {
-            actual_token = token_symb(&data->second_token);
-            data->second_token.type = T_NONE;
-        }
-        else
-        {
-            actual_token = token_symb(&data->token);
-        }
-
-
-        top_terminal = stack_top_terminal(&e_stack);
-
-
-        /// use of precedence table
-        switch (precedence_table[table_index(top_terminal->symbol)][table_index(actual_token)])
-        {
-            /// error
-            case E:
-                if (actual_token == DOLLAR && top_terminal->symbol == DOLLAR)
+		/// control second and third token
+		/// control is because
+            /// T_NONE is like NULL
+                if(data->third_token.type != T_NONE)
                 {
-                    ending = true;/// OK end
+                        actual_token = token_symb(&data->third_token);
+                        data->third_token.type = T_NONE;
+                }
+                else if(data->second_token.type != T_NONE)
+                {
+                        actual_token = token_symb(&data->second_token);
+                        data->second_token.type = T_NONE;
                 }
                 else
                 {
-                    expression_stack_destroy(&e_stack);
-                    errSyn();
+                    actual_token = token_symb(&data->token);
                 }
-                break;
 
-                /// reduce
-            case R:
-                reduce( &e_stack);
-                break;
 
-                /// equal
-            case Q:
-                expression_stack_push(&e_stack, actual_token);
+                top_terminal = stack_top_terminal(&e_stack);
 
-                /// empty second and thirh token
-                if(data->third_token.type == T_NONE && data->second_token.type == T_NONE)
+
+		/// use of precedence table
+                switch (precedence_table[table_index(top_terminal->symbol)][table_index(actual_token)])
                 {
-                    getParserToken(&data->token);
-                }
-                break;
+                    /// error
+                    case E:
+                        if (actual_token == DOLLAR && top_terminal->symbol == DOLLAR)
+                        {
+                            ending = true;/// OK end
+                        }
+                        else
+                        {
+                            expression_stack_destroy(&e_stack);
+                            errSyn();
+                        }
+                        break;
 
-                ///shift
-            case S:
-                insert_after_top_terminal (&e_stack, STOP);
-                expression_stack_push(&e_stack, actual_token);/// push stack
-                /// empty second and thirh token
-                if(data->third_token.type == T_NONE && data->second_token.type == T_NONE)
-                {
-                    getParserToken(&data->token);
+                        /// reduce
+                    case R:
+                        reduce( &e_stack);
+                        break;
+
+			/// equal
+                        case Q:
+                            expression_stack_push(&e_stack, actual_token);
+
+                        /// empty second and thirh token
+                        if(data->third_token.type == T_NONE && data->second_token.type == T_NONE)
+                        {
+                            getParserToken(&data->token);
+                        }
+                        break;
+
+                        ///shift
+                    case S:
+                        insert_after_top_terminal (&e_stack, STOP);
+                        expression_stack_push(&e_stack, actual_token);/// push stack
+                        /// empty second and thirh token
+                        if(data->third_token.type == T_NONE && data->second_token.type == T_NONE)
+                        {
+                            getParserToken(&data->token);
+                        }
+                        break;
+                        default:
+                                break;
                 }
-                break;
-            default:
-                break;
+        } while (!ending);
+
+        
+	/// not reduced symbols
+        expression_list* last = expression_stack_top(&e_stack);
+
+        if (last->symbol != NON_TERM)
+        {
+            errSyn();
         }
-    } while (!ending);
-
-
-    /// not reduced symbols
-    expression_list* last = expression_stack_top(&e_stack);
-
-    if (last->symbol != NON_TERM)
-    {
-        errSyn();
-    }
-    expression_stack_destroy(&e_stack);
-    return SYNTAX_OK;
+        expression_stack_destroy(&e_stack);
+        return SYNTAX_OK;
 }

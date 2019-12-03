@@ -24,9 +24,8 @@ if (data->token.type != (_type)) errSyn()
 /// ==================================================================
 
 
-int main_body(MainData* data)
+ int main_body(MainData* data)
 {
-
     GET_TOKEN();
     switch(data->token.type)
     {
@@ -37,9 +36,6 @@ int main_body(MainData* data)
             GET_TOKEN();
             CHECK_TYPE(T_ID);
 
-            //print_stack();
-            //create_insert_symbol(data->second_token.data->string, FUNCTION,  NULL);//jen ojeb v second_token zadna hodnota neni
-            //printf("%d\n",is_in_stack(data->token.data->string));
             /// pokud již byla funkce definována fixme
 //            if(is_in_stack( data->ptoken->data->string))
 //            {
@@ -77,7 +73,7 @@ int main_body(MainData* data)
                 GET_TOKEN();
             }
 
-            //CHECK_TYPE(T_DEDENT);
+           //CHECK_TYPE(T_DEDENT);
             return main_body(data);
 
         case T_IF:
@@ -95,7 +91,7 @@ int main_body(MainData* data)
         case T_FLOAT:
         case T_STRING:
         case T_EOL:
-            /// Pravidlo 2 <main_body> -> <code> <main_body>
+           /// Pravidlo 2 <main_body> -> <code> <main_body>
             code(data);
             return main_body(data);
 
@@ -111,7 +107,7 @@ int main_body(MainData* data)
 }
 
 
-int main_func(MainData* data)
+ int main_func(MainData* data)
 {
     switch (data->token.type)
     {
@@ -158,13 +154,13 @@ int main_func(MainData* data)
 }
 
 
-int def_func_params(MainData* data)
+ int def_func_params(MainData* data)
 {
     switch (data->token.type)
     {
         case T_ID:
             /// pravidlo 4: <def_func_params> -> "ID" <func_param_x>
-            insert_param( data->function_name,  data->ptoken->data->string, STRING);//fixme
+           insert_param( data->function_name,  data->ptoken->data->string, STRING);//fixme
 
             GET_TOKEN();
             func_param_x(data);
@@ -180,7 +176,7 @@ int def_func_params(MainData* data)
 }
 
 
-int func_param_x(MainData* data)
+ int func_param_x(MainData* data)
 {
     switch (data->token.type)
     {
@@ -189,14 +185,14 @@ int func_param_x(MainData* data)
 
             GET_TOKEN();
             CHECK_TYPE(T_ID);
-            insert_param( data->function_name,  data->ptoken->data->string, STRING);//fixme
+           insert_param( data->function_name,  data->ptoken->data->string, STRING);//fixme
 
             GET_TOKEN();
             func_param_x(data);
 
         case T_RBRACK:
-            /// pravidlo 7: <func_param_x> -> e
-            return SYNTAX_OK;
+             /// pravidlo 7: <func_param_x> -> e
+             return SYNTAX_OK;
         default:
             errSyn();
             return SYNTAX_ERROR;
@@ -204,7 +200,7 @@ int func_param_x(MainData* data)
 }
 
 
-int main_(MainData* data)
+ int main_(MainData* data)
 {
     switch (data->token.type)
     {
@@ -245,7 +241,7 @@ int main_(MainData* data)
 }
 
 
-int code(MainData* data)
+ int code(MainData* data)
 {
     switch (data->token.type)
     {
@@ -288,10 +284,10 @@ int code(MainData* data)
             CHECK_TYPE(T_INDENT);
             GET_TOKEN();
             main_(data);
-            if(data->token.type != T_DEDENT)
-            {
-                CHECK_TYPE(T_EOL);
-            }
+if(data->token.type != T_DEDENT)
+{
+            CHECK_TYPE(T_EOL);
+}
             GET_TOKEN();
             while(data->token.type != T_DEDENT)
             {
@@ -299,7 +295,7 @@ int code(MainData* data)
                 CHECK_TYPE(T_EOL);
                 GET_TOKEN();
             }
-            CHECK_TYPE(T_DEDENT);
+           CHECK_TYPE(T_DEDENT);
 
             GET_TOKEN();
             while(data->token.type == T_DEDENT)//TODO DEDENT PRO VNORENY IF
@@ -319,9 +315,9 @@ int code(MainData* data)
             GET_TOKEN();
             main_(data);
             if(data->token.type != T_DEDENT)
-            {
-                CHECK_TYPE(T_EOL);
-            }
+{
+            CHECK_TYPE(T_EOL);
+}
             GET_TOKEN();
             while(data->token.type != T_DEDENT)
             {
@@ -380,7 +376,7 @@ int code(MainData* data)
 }
 
 /// ID
-int identif(MainData* data)
+ int identif(MainData* data)
 {
     switch (data->token.type)
     {
@@ -443,7 +439,7 @@ int identif(MainData* data)
             return SYNTAX_OK;
 
         case T_EQ_ASSIG:
-            /// rule 17: <identif> -> = <ins>
+        /// rule 17: <identif> -> = <ins>
 //            if(symtable_search(data->table, data->second_token->data->string) == false)
 //            {
 //            }
@@ -470,7 +466,7 @@ int identif(MainData* data)
 
 
 ///ID =
-int ins(MainData* data)
+ int ins(MainData* data)
 {
     switch (data->token.type)
     {
@@ -499,7 +495,7 @@ int ins(MainData* data)
 
 
 ///ID = ID
-int ins_id(MainData* data)
+ int ins_id(MainData* data)
 {
     switch (data->token.type)
     {
@@ -595,7 +591,7 @@ int ins_id(MainData* data)
 }
 
 
-int call_func_params(MainData* data)
+ int call_func_params(MainData* data)
 {
     switch (data->token.type)
     {
@@ -651,7 +647,7 @@ int call_func_params(MainData* data)
 }
 
 
-int call_func_param_x(MainData* data)
+ int call_func_param_x(MainData* data)
 {
     switch (data->token.type)
     {
@@ -679,7 +675,7 @@ int call_func_param_x(MainData* data)
 }
 
 
-int inner_func(MainData* data)
+ int inner_func(MainData* data)
 {
     gen_code_from_line(function_call);
     switch (data->token.type)
@@ -832,7 +828,7 @@ int inner_func(MainData* data)
 }
 
 
-int term(MainData* data)
+ int term(MainData* data)
 {
     switch (data->token.type)
     {
