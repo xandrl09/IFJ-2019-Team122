@@ -860,6 +860,7 @@ gen_code_from_line(function_call_with_assignment);
                 errSyn();
                 return SYNTAX_ERROR;
             }
+            GET_TOKEN();
             return term(data);
 
         case T_RBRACK:
