@@ -30,8 +30,8 @@ static char specialChars[NUMBER_OF_SPECIAL_CHARS] = {'(', ')', '[', ']', ',', ':
 static FILE *inputFile;
 
 
-int createScanner(char *path) {
-    inputFile = fopen(path, "r");
+int createScanner() {
+    inputFile = stdin;
     if (inputFile == NULL) {
         fprintf(stderr, "File cannot be opened!\n");
         return -1;

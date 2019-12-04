@@ -100,7 +100,7 @@ typedef struct T_token
 
 
 
-int createScanner(char *path);
+int createScanner();
 
 // The scanner's main method, used to transform the whole code into a queue of tokens
 // modifies input argument

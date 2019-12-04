@@ -32,7 +32,7 @@ void evaluateInput(int param)	{
 int main(int argc, char* argv[])	{
     tokenQueue = malloc(sizeof(tDLList));
     DLInitList(tokenQueue);
-    createScanner(argv[1]);			//argv[1] == path
+    createScanner();			//argv[1] == path
     DLInitList(tokenQueue);
     init_symtable();
     code_gen_stack = CDinit_stack();
