@@ -42,7 +42,73 @@ int nil_lbl_id = 0;
 int typecheck_jumps_id = 0;
 int else_lbl_id = 0;
 
+int print_lbl_id = 0;
+
 int scope_nesting_lvl = 0;
+
+
+
+void handle_inputs_line()   {
+    printf("CREATEFRAME\n");
+    printf("JUMP *$inputs\n");
+    printf("LABEL &$inputs\n");
+    printf("PUSHFRAME\n");
+    printf("DEFVAR LF@_retval\n");
+    printf("MOVE LF@_retval nil@nil\n");
+    printf("DEFVAR LF@$inputs\n");
+    printf("READ LF@$inputs string\n");
+    printf("MOVE LF@_retval LF@inputs\n");
+    printf("POPFRAME\n");
+    printf("RETURN\n");
+    printf("LABEL *$inputs\n");
+    printf("CALL &$inputs");
+    printf("MOVE LF@_retval TF@_retval\n");
+    printf("MOVE GF@_result TF@_retval\n");
+    if (strcmp(tokenQueue->First->rptr->rptr->value, "inputs" ) == 0)
+        printf("MOVE LF@%s GF@_result\n", tokenQueue->First->value);
+}
+
+void handle_inputf_line()   {
+    printf("CREATEFRAME\n");
+    printf("JUMP *$inputf\n");
+    printf("LABEL &$inputf\n");
+    printf("PUSHFRAME\n");
+    printf("DEFVAR LF@_retval\n");
+    printf("MOVE LF@_retval nil@nil\n");
+    printf("DEFVAR LF@$inputf\n");
+    printf("READ LF@$inputf float\n");
+    printf("MOVE LF@_retval LF@$inputf\n");
+    printf("POPFRAME\n");
+    printf("RETURN\n");
+    printf("LABEL *$inputf\n");
+    printf("CALL &$inputf\n");
+    printf("MOVE LF@_retval TF@_retval\n");
+    printf("MOVE GF@_result TF@_retval\n");
+    if (strcmp(tokenQueue->First->rptr->rptr->value, "inputf" ) == 0)
+        printf("MOVE LF@%s GF@_result\n", tokenQueue->First->value);
+}
+
+void handle_inputi_line()   {
+    printf("CREATEFRAME\n");
+    printf("JUMP *$inputi\n");
+    printf("LABEL &$inputi\n");
+    printf("PUSHFRAME\n");
+    printf("DEFVAR LF@_retval\n");
+    printf("MOVE LF@_retval nil@nil\n");
+    printf("DEFVAR LF@$inputi\n");
+    printf("READ LF@$inputi int\n");
+    printf("MOVE LF@_retval LF@$inputi\n");
+    printf("POPFRAME\n");
+    printf("RETURN\n");
+    printf("LABEL *$inputi\n");
+    printf("CALL &$inputi\n");
+    printf("MOVE LF@_retval TF@_retval\n");
+    printf("MOVE GF@_result TF@_retval\n");
+    // now - should I assign it?
+    if (strcmp(tokenQueue->First->rptr->rptr->value, "inputi" ) == 0)
+        printf("MOVE LF@%s GF@_result\n", tokenQueue->First->value);
+}
+
 
 /**
  * @brief  Generates code needed to handle lines like these
@@ -59,7 +125,6 @@ void handle_function_call_with_assignment() {
     printf("MOVE %s@%s GF@expr_res\n", get_variable_scope(tokenQueue->First->value), tokenQueue->First->value);
     // then we need to assign function's return value to variable on the right side
 }
-
 
 
 /**
@@ -227,7 +292,7 @@ void handle_return()   {
         char* scope = get_variable_scope(local_var_scope->First->rptr->value);
         printf("MOVE LF@_retval %s@%s\n", scope, tokenQueue->First->value);
     }
-    //  printf("%s", CDpop(&code_gen_stack));
+    printf("%s", CDpop(code_gen_stack));
 }
 
 void handle_def() {
@@ -249,8 +314,7 @@ void handle_def() {
 }
 
 void handle_dedent()   {
-    char* kokot = CDpop(code_gen_stack);
-    printf("%s", kokot);
+    printf("%s", CDpop(code_gen_stack));
 }
 
 /**
@@ -259,33 +323,44 @@ void handle_dedent()   {
 void handle_function_call() {
     char* lbl = tokenQueue->Act->value;
     printf("CREATEFRAME\n");
-    gen_function_call_args();
-    if (strcmp(lbl, "print")==0)    {
-        gen_print_method();
-    } else{
+    int argc = gen_function_call_args();
+    if (strcmp(lbl, "print") == 0)
+        gen_print_method(argc);
+    else if (strcmp(lbl, "inputi") == 0)
+        handle_inputi_line();
+    else if (strcmp(lbl, "inputf") == 0)
+        handle_inputf_line();
+    else if (strcmp(lbl, "inputs") == 0)
+        handle_inputs_line();
+    else    {
         printf("CALL &%s\n", lbl);
         printf("MOVE LF@_retval TF@_retval\n");
     }
 }
 
-
-void gen_print_method() {
-    printf("JUMP *$print\n");
-    printf("LABEL &$print\n");
+/**
+ *
+ */
+void gen_print_method(int num_of_args) {
+    printf("JUMP *$print%i_for_%i\n", print_lbl_id, num_of_args);
+    printf("LABEL &$print%i_for_%i\n", print_lbl_id, num_of_args);
     printf("PUSHFRAME\n");
     printf("DEFVAR LF@_retval\n");
     printf("MOVE LF@_retval nil@nil\n");
-    printf("WRITE LF@%%1\n");
+    for(int i = 1; i <= num_of_args; i++)
+        printf("WRITE LF@%i\n", i);
     printf("POPFRAME\n");
-    printf("RETURN\nLABEL *$print\nCALL &$print\n");
+    printf("RETURN\n");
+    printf("LABEL *$print%i_for_%i\n", print_lbl_id, num_of_args);
+    printf("CALL &$print%i_for_%i\n", print_lbl_id, num_of_args);
 }
 
 char* get_type_from_value(Token *token)    {
     switch(token->type) {
-        case floatingPoint: return "float"; break;
-        case integer: return "int"; break;
-        case string: return "string"; break;
-        case identifier: return "LF"; break;
+        case floatingPoint: return "float";
+        case integer: return "int";
+        case string: return "string";
+        case identifier: return "LF";
         default: fprintf(stderr, "Encountered some strange token in generator, type: %i\n", token->type);
     }
 }
@@ -309,10 +384,14 @@ void gen_function_def_args() {
 
 /**
  *  my_function(argument1, argument22):
+ *
  */
-void gen_function_call_args()   {
+int gen_function_call_args()   {
     //DLFirst(tokenQueue);
-    tokenQueue->Act = tokenQueue->Act->rptr->rptr;    // we're pointing at first argument
+    if(tokenQueue->Act->rptr != NULL)
+        tokenQueue->Act = tokenQueue->Act->rptr->rptr;    // we're pointing at first argument
+    else
+        return 0;
     int arg_cnt = 0;
     while (tokenQueue->Act != NULL && tokenQueue->Act->type != specialChar && tokenQueue->Act->type  != EOL) {
         printf("DEFVAR TF@%%%i\n", ++arg_cnt);
@@ -320,6 +399,7 @@ void gen_function_call_args()   {
         DLSucc(tokenQueue);
         DLSucc(tokenQueue);
     }
+    return arg_cnt;
 }
 
 /**
@@ -597,6 +677,7 @@ void gen_init() {
 void gen_code_from_line(line_type line) {
     prepare_line_of_tokens(tokenQueue);
     postfix_expr = TinitStack();
+    printf("\n\n");
     switch(line)    {
         case def_line:
             scope_nesting_lvl++;
@@ -604,6 +685,7 @@ void gen_code_from_line(line_type line) {
             break;
         case function_call:
             scope_nesting_lvl++;
+            DLFirst(tokenQueue);
             handle_function_call();
             break;
         case function_call_with_assignment:
@@ -632,6 +714,7 @@ void gen_code_from_line(line_type line) {
             break;
         case end_of_feed:
             handle_eof();
+            break;
         default:
             break;
     }

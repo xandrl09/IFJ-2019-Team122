@@ -33,6 +33,7 @@
  * LABEL $type_check_passed na konci typove kontroly operandu
  * LABEL &else42 a *else42
  * LABEL &_$INIT
+ * LABEL &$inputi a *$inputi, obdobne pro inputs a inputf
  */
 
 
@@ -43,8 +44,8 @@ typedef enum    {
 }line_type;
 
 
-void handle_eof();
-void gen_print_method();
+int is_relational_op(char* val);
+void gen_print_method(int num_of_args);
 void gen_init();
 void gen_code_from_line(line_type line);
 void generate_header();
@@ -54,7 +55,7 @@ void gen_var_declaration_code(Token *token, char* scope);
 void generate_variable(char* name, char* scope, tDLList *queue);
 void gen_function_def_args();
 void generate_expression();
-void gen_function_call_args();
+int gen_function_call_args();
 void gen_switch_operands();
 void gen_assign_types();
 void gen_typecheck_jumps();
@@ -85,7 +86,10 @@ void handle_assignment();
 void handle_if();
 void handle_while();
 void handle_else();
-int is_relational_op(char* val);
+void handle_inputi_line();
+void handle_inputf_line(); //TODO
+void handle_inputs_line(); //TODO
+void handle_eof();
 
 void gen_relational_comparison(char* op);
 
