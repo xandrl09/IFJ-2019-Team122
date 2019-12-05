@@ -12,6 +12,7 @@
 
 #pragma once
 
+
 /**
  * Inicialization of stack.
  * @return New stack.
@@ -70,7 +71,7 @@ expression_list* stack_top_terminal(expression_stack* target)
 
 
 /**
- *
+ * Function inserts list after top terminal.
  * @param target Pointer to stack.
  * @param symb
  */
@@ -102,7 +103,7 @@ void insert_after_top_terminal(expression_stack* target, symbol_enum symb)
 
 
 /**
- *
+ * Function returns head of stack.
  * @param target Pointer to stack.
  * @return Head of stack.
  */
@@ -126,7 +127,7 @@ void expression_stack_destroy(expression_stack *target)
 
 
 /**
- *
+ * Function returns true if stack is empty, else returns false.
  * @param target Pointer to stack.
  * @return True if stack is empty, otherwise false.
  */

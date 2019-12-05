@@ -11,8 +11,10 @@
 #include "expresions.h"
 #include "main.h"
 
-expression_stack  e_stack;
 
+/**
+ * Precedence table, more info in documentation
+ */
 int precedence_table[7][7] =
         {
                ///r |+- |*/ | ( | ) | i | $ |
@@ -25,35 +27,39 @@ int precedence_table[7][7] =
                 { S , S , S , S , E , S , E }  /// $
         };
 
+expression_stack  e_stack;
 
 
 /**
- *
- * @param num
- * @param op1
- * @param op2
- * @param op3
- * @return
+ * Function check if rules are ok
+ * @param count number of operands
+ * @param operand1 first operand in processed rule
+ * @param operand2 second operand in processed rule
+ * @param operand3 third operand in processed rule
+ * @return false if there is error
  */
-bool  process_rules(int num, expression_list *op1, expression_list *op2, expression_list *op3)
+bool  process_rules(int count, expression_list *operand1, expression_list *operand2, expression_list *operand3)
 {
-    if(num == 3)
+    if(count == 3)
     {
-        if (op1->symbol == LEFT_BRACK_ && op2->symbol == NON_TERM && op3->symbol == RIGHT_BRACK_)
-            return true;
-        if (op1->symbol == NON_TERM && op3->symbol == NON_TERM)
+        if (operand1->symbol == LEFT_BRACK_ && operand2->symbol == NO_TERMINAL && operand3->symbol == RIGHT_BRACK_)
         {
-            switch (op2->symbol)
+            return true;
+        }
+        if (operand1->symbol == NO_TERMINAL && operand3->symbol == NO_TERMINAL)
+        {
+            switch (operand2->symbol)
             {
-                case PLUS:
-                case MINUS:
+                case PLUS_:
+                case MINUS_:
                 case MUL_:
                 case DIV_:
+                case DIV_WH_:
                 case EQ_:
-                case NEQ:
-                case LEQ:
+                case N_EQ:
+                case L_EQ:
                 case LESS:
-                case MEQ:
+                case M_EQ:
                 case MORE:
                     return true;
                 default:
@@ -62,13 +68,18 @@ bool  process_rules(int num, expression_list *op1, expression_list *op2, express
         }
         return false;
     }
-    else if(num == 1)
+    else if(count == 1)
     {
-        if (op1->symbol == FLOAT_|| op1->symbol == INT_ || op1->symbol == ID  || op1->symbol == STRING_)
+        if (operand1->symbol == FLOAT_|| operand1->symbol == INT_ ||
+                operand1->symbol == ID  || operand1->symbol == STRING_)
         {
             return true;
         }
-        return false;
+        else
+        {
+            return false;
+        }
+
     }
     else
     {
@@ -78,18 +89,19 @@ bool  process_rules(int num, expression_list *op1, expression_list *op2, express
 
 
 /**
- *
- * @param exp_stack
+ * Function reduces stack
+ * @param exp_stack pointer to stack
  * @return
  */
 static int reduce( expression_stack *exp_stack)
 {
-        expression_list* op1 = NULL; expression_list* op2 = NULL; expression_list* op3 = NULL;
-        bool rule;
+    expression_list* op1 = NULL; expression_list* op2 = NULL; expression_list* op3 = NULL;
+    bool rule;
 
-        int count = 0;
-        expression_list* temp = expression_stack_top(&e_stack);
+    int count = 0;
+    expression_list* temp = expression_stack_top(&e_stack);
 
+    /// number of values before stop
     while (true)
     {
         if (temp->symbol == STOP)
@@ -103,18 +115,17 @@ static int reduce( expression_stack *exp_stack)
         temp = temp->next;
     }
 
-
-    if ( count == 3 )
+    if ( count == 3 )/// normal operation
     {
         op1 = exp_stack->top->next->next; op2 = exp_stack->top->next; op3 = exp_stack->top;
         rule = process_rules(count, op1, op2, op3);
     }
-    else if ( count == 1)
+    else if ( count == 1)/// value into nonterminal
     {
         op1 = exp_stack->top;
         rule = process_rules(count, op1, NULL, NULL);
     }
-    else
+    else /// invalid operation
     {
         expression_stack_destroy(exp_stack);
         errSyn();
@@ -127,13 +138,13 @@ static int reduce( expression_stack *exp_stack)
             errSyn();
             return SYNTAX_ERROR;
         }
-        else
+        else /// popping stack
         {
             for (int i = 0; i < count + 1; i++)
             {
                 expression_stack_pop(exp_stack);
             }
-            expression_stack_push(exp_stack, NON_TERM);
+            expression_stack_push(exp_stack, NO_TERMINAL);
         }
 
         return 0;
@@ -141,7 +152,7 @@ static int reduce( expression_stack *exp_stack)
 
 
 /**
- *
+ * function turns expresion enum into tables rows
  * @param symbol
  * @return
  */
@@ -149,56 +160,59 @@ static index_enum table_index(symbol_enum symbol)
 {
     switch (symbol)
     {
-        case PLUS:
-        case MINUS:
-            return I_PLUS_MINUS;
+        case PLUS_:
+            return T_PLUS;
+        case MINUS_:
+            return T_PLUS;
 
         case MUL_:
+            return T_MUL_DI;
         case DIV_:
-        case DIV_WH:
-            return I_MUL_DIV;
+            return T_MUL_DI;
+        case DIV_WH_:
+            return T_MUL_DI;
 
         case EQ_:
-            return I_REL_OP;
-        case NEQ:
-            return I_REL_OP;
-        case LEQ:
-            return I_REL_OP;
+            return T_REL;
+        case N_EQ:
+            return T_REL;
+        case L_EQ:
+            return T_REL;
         case LESS:
-            return I_REL_OP;
-        case MEQ:
-            return I_REL_OP;
+            return T_REL;
+        case M_EQ:
+            return T_REL;
         case MORE:
-            return I_REL_OP;
+            return T_REL;
 
         case LEFT_BRACK_:
-            return I_LEFT_BRACKET;
+            return T_LEFT_B;
 
         case ID:
-            return I_DATA;
+            return T_IDS;
         case INT_:
-            return I_DATA;
+            return T_IDS;
         case FLOAT_:
-            return I_DATA;
+            return T_IDS;
         case STRING_:
-            return I_DATA;
+            return T_IDS;
 
         default:
             if(symbol == RIGHT_BRACK_)
             {
-                return I_RIGHT_BRACKET;
+                return T_RIGHT_B;
             }
             else
             {
-                return I_DOLLAR;
+                return T_END;
             }
     }
 }
 
 
 /**
- *
- * @param token
+ * function turns teken data to expresion enum
+ * @param token T_token from parser.c
  * @return
  */
 static symbol_enum token_symb(T_token *token)
@@ -211,18 +225,18 @@ static symbol_enum token_symb(T_token *token)
         case T_SUB:
             if(token->type == T_ADD)
             {
-                return MINUS;
+                return MINUS_;
             }
             else
             {
-                return PLUS;
+                return PLUS_;
             }
         case T_MUL:
             return MUL_;
         case T_DIV:
             return DIV_;
         case T_WH_N_DIV:
-            return DIV_WH;
+            return DIV_WH_;
         case T_LBRACK:
             return LEFT_BRACK_;
         case T_RBRACK:
@@ -241,13 +255,13 @@ static symbol_enum token_symb(T_token *token)
                 case T_EQ_COMP:
                     return EQ_;
                 case T_NEQ:
-                    return NEQ;
+                    return N_EQ;
                 case T_LESS_EQ:
-                    return LEQ;
+                    return L_EQ;
                 case T_LESS:
                     return LESS;
                 case T_MORE_EQ:
-                    return MEQ;
+                    return M_EQ;
                 default:
                     return DOLLAR;
             }
@@ -256,16 +270,16 @@ static symbol_enum token_symb(T_token *token)
 
 
 /**
- *
- * @param data
+ * Function process expressions for parser.c
+ * @param data Main struct from parser.h
  * @return
  */
 int expression(MainData* data)
 {
-	///initialization of stack and buffer
+	    ///initialization of stack
         expression_stack_init(&e_stack);
 
-	/// end of stack
+	    /// end of stack
         expression_stack_push(&e_stack, DOLLAR);
 
         expression_list* top_terminal;
@@ -276,7 +290,7 @@ int expression(MainData* data)
         do
         {
 		/// control second and third token
-		/// control is because
+		/// control is because ID = in parser
             /// T_NONE is like NULL
                 if(data->third_token.type != T_NONE)
                 {
@@ -297,7 +311,7 @@ int expression(MainData* data)
                 top_terminal = stack_top_terminal(&e_stack);
 
 
-		/// use of precedence table
+		        /// use of precedence table
                 switch (precedence_table[table_index(top_terminal->symbol)][table_index(actual_token)])
                 {
                     /// error
@@ -318,9 +332,9 @@ int expression(MainData* data)
                         reduce( &e_stack);
                         break;
 
-			/// equal
-                        case Q:
-                            expression_stack_push(&e_stack, actual_token);
+			        /// equal
+			        case Q:
+			            expression_stack_push(&e_stack, actual_token);
 
                         /// empty second and thirh token
                         if(data->third_token.type == T_NONE && data->second_token.type == T_NONE)
@@ -333,7 +347,7 @@ int expression(MainData* data)
                     case S:
                         insert_after_top_terminal (&e_stack, STOP);
                         expression_stack_push(&e_stack, actual_token);/// push stack
-                        /// empty second and thirh token
+                        /// empty second and thirth token
                         if(data->third_token.type == T_NONE && data->second_token.type == T_NONE)
                         {
                             getParserToken(&data->token);
@@ -342,13 +356,13 @@ int expression(MainData* data)
                         default:
                                 break;
                 }
-        } while (!ending);
+        } while (!ending); /// works till ending == true
 
         
-	/// not reduced symbols
-        expression_list* last = expression_stack_top(&e_stack);
 
-        if (last->symbol != NON_TERM)
+        expression_list* last = expression_stack_top(&e_stack);
+        /// not reduced symbols in stack
+        if (last->symbol != NO_TERMINAL)
         {
             errSyn();
         }

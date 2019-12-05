@@ -11,22 +11,20 @@
 
 
 #include "structs.h"
-//#include "stack.h"
 #include "scanner.h"
 #include "err.h"
 #include "symtable.h"
 #include "expresions.h"
 
-// hlavicka pro syntakticky analyzator
 
 
 /**
- * @struct Parser's internal data representation.
+ * @struct Main structure suplements global variables.
  */
 typedef struct
 {
 
-    symtable *table; /// CHECK
+    symtable *table;
 
     T_token token;
     T_token *ptoken;

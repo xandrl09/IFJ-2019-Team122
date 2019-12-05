@@ -17,20 +17,25 @@
 #include "scanner.h"
 
 
-
+/**
+ * enum for rows in table
+ */
 typedef enum
 {
-    I_REL_OP,			/// 0 r
-    I_PLUS_MINUS,		/// 1 +-
-    I_MUL_DIV,		    /// 2 */ //
-    I_LEFT_BRACKET,		/// 3 (
-    I_RIGHT_BRACKET,	/// 4 )
-    I_DATA,	            /// 5 i
-    I_DOLLAR			/// 6 $
+    T_REL,		/// 0 r
+    T_PLUS,		/// 1 +-
+    T_MUL_DI,  /// 2 */ //
+    T_LEFT_B,	/// 3 (
+    T_RIGHT_B,	/// 4 )
+    T_IDS,	    /// 5 i
+    T_END		/// 6 $
 
 } index_enum;
 
 
+/**
+ * enum for rules in table
+ */
 typedef enum
 {
     S,    /// < SHIFT

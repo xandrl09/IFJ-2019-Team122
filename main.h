@@ -1,25 +1,30 @@
 /**
- * Author: Ondřej Andrla
- * datum: 2019
+ * Implementace překladače imperativního jazyka IFJ19
+ *
+ * xlinne00     Linner Marek
+ * xstoja06     Stojan Martin
+ * xandrl09     Andrla Ondřej
+ *
  */
 
 #pragma once
 
 /**
- * @enum Symbols used for precednece analysis.
+ * @enum This enum is for expresions.c.
+ * It
  */
 typedef enum symbol_enum
 {
-    PLUS,			/// +
-    MINUS,			/// -
+    PLUS_,			/// +
+    MINUS_,			/// -
     MUL_,			/// *
     DIV_,			/// /
-    DIV_WH,         /// //
+    DIV_WH_,         /// //
     EQ_,			/// =
-    NEQ,			/// <>
-    LEQ,			/// <=
+    N_EQ,			/// <>
+    L_EQ,			/// <=
     LESS,			/// <
-    MEQ,			/// >=
+    M_EQ,			/// >=
     MORE,			/// >
     LEFT_BRACK_,	/// (
     RIGHT_BRACK_,	/// )
@@ -29,7 +34,7 @@ typedef enum symbol_enum
     STRING_,			/// string
     DOLLAR,			/// $
     STOP,			/// stop symbol used when reducing
-    NON_TERM		/// non-terminal
+    NO_TERMINAL		/// non-terminal
 } symbol_enum;
 
 

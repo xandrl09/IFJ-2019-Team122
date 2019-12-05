@@ -278,7 +278,7 @@ gen_code_from_line(function_call);
             expression(data);
 
             CHECK_TYPE(T_COLON);
-gen_code_from_line(if_line);
+            gen_code_from_line(if_line);
 
             GET_TOKEN();
             CHECK_TYPE(T_EOL);
@@ -287,10 +287,10 @@ gen_code_from_line(if_line);
             CHECK_TYPE(T_INDENT);
             GET_TOKEN();
             main_(data);
-if(data->token.type != T_DEDENT)
-{
-            CHECK_TYPE(T_EOL);
-}
+            if(data->token.type != T_DEDENT)
+            {
+                CHECK_TYPE(T_EOL);
+            }
             GET_TOKEN();
             while(data->token.type != T_DEDENT)
             {
