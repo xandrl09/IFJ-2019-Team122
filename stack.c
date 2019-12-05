@@ -65,7 +65,7 @@ void push(Stack *target_stack, int number) {
 }
 
 void Tpush(TStack *target_stack, Token token) {
-    target_stack->arr[++target_stack->top] = &token;
+    target_stack->arr[target_stack->top++] = &token;
     //target_stack->top++;
 }
 
