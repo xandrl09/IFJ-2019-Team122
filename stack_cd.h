@@ -17,6 +17,10 @@ CDStack * CDinit_stack();
 char* CDpop(CDStack *stack);
 void CDpush(CDStack *stack, char* line);
 char* CDtop(CDStack stack);
+char* copy_string(char *str);
+void CDStack_destroy(CDStack *stack);
+void CDStack_free_elems(CDStack *stack);
+
 
 
 #endif //PROJEKT_STACK_CD_H

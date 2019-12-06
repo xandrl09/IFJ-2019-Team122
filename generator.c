@@ -45,7 +45,7 @@ int else_lbl_id = 0;
 int print_lbl_id = 0;
 
 int scope_nesting_lvl = 0;
-
+char* current_func_lbl = "";
 
 
 void handle_inputs_line()   {
@@ -117,12 +117,18 @@ void handle_inputi_line()   {
 void handle_function_call_with_assignment() {
     // first we need to call function on the right side
     // in order to do so we need to set tokenQueue->Act to function's identifier
+    if(scope_nesting_lvl <= 0 && !is_duplicate_definition(tokenQueue->First->value, global_var_scope)) {
+        DLInsertLast(global_var_scope, identifier, tokenQueue->First->value, -1);
+    }
+    else if (scope_nesting_lvl > 0 && !is_duplicate_definition(tokenQueue->First->value, local_var_scope))     {
+        DLInsertLast(local_var_scope, identifier, tokenQueue->First->value, -1);
+    }
     DLFirst(tokenQueue);
     DLSucc(tokenQueue);
     DLSucc(tokenQueue);
     handle_function_call();
-    printf("MOVE GF@expr_res TF@_retval\n");
-    printf("MOVE %s@%s GF@expr_res\n", get_variable_scope(tokenQueue->First->value), tokenQueue->First->value);
+    printf("MOVE GF@_result TF@_retval\n");
+    printf("MOVE %s@%s GF@_result\n", get_variable_scope(tokenQueue->First->value), tokenQueue->First->value);
     // then we need to assign function's return value to variable on the right side
 }
 
@@ -157,7 +163,6 @@ void gen_while_labels() {
     printf("LABEL &_$WHILE%i\n", while_lbl_id);
     char end_of_while_cycle [MAX_TOKEN_LEN] = "";
     sprintf(end_of_while_cycle, "JUMP &_$WHILE%i\nLABEL *_$WHILE%i\n", while_lbl_id, while_lbl_id);
-    while_lbl_id++;
     CDpush(code_gen_stack, end_of_while_cycle);
 }
 
@@ -174,11 +179,11 @@ void handle_while()    {
     gen_while_labels();
     tDLList expression = get_expression_queue(1);
     postfix_expr = infix_2_postfix(&expression);
+    printf("CLEARS\n");
     generate_expression();
     gen_expression_to_bool(); // this turns our expression's result to either true or false
-    // end with
-    // JUMP &_$bool42
-    // LABEL *_$bool42
+    printf("JUMPIFNEQ *_$WHILE%i GF@_result bool@true\n", while_lbl_id);
+    while_lbl_id++;
 }
 
 /**
@@ -191,7 +196,8 @@ tDLList get_expression_queue(int to_skip) {
     tDLList *expression_queue = malloc(sizeof(tDLList));
     DLInitList(expression_queue);
     for(int i = 0; i < to_skip; i++)   { DLSucc(tokenQueue); }
-    while(tokenQueue->Act != NULL && tokenQueue->Act->rptr != NULL && tokenQueue->Act->rptr->type != EoF)   {
+    while(tokenQueue->Act != NULL && tokenQueue->Act->rptr != NULL &&
+          tokenQueue->Act->rptr->type != EoF && tokenQueue->Act->type != specialChar)   {
         DLInsertLast(expression_queue, tokenQueue->Act->type, tokenQueue->Act->value, -1);
         DLSucc(tokenQueue);
     }
@@ -199,48 +205,24 @@ tDLList get_expression_queue(int to_skip) {
     return *expression_queue;
 }
 
-// TODO
 /**
  * if arg1 < arg2+4+38:
  * if z:
  */
-void handle_if()    {
+void handle_if() {
     DLFirst(tokenQueue);
-    // first we need to push our left-operand to stack
-    // pokud je ve vyrazu relacni operator
     tDLList expression;
     int is_relational = is_relational_op(tokenQueue->First->rptr->rptr->value);
-    if (!is_relational) {
-        expression = get_expression_queue(1);
-    } else{
-        printf("PUSHS %s@%s\n", get_type_from_value(tokenQueue->First->rptr), tokenQueue->First->rptr->value);
-        expression = get_expression_queue(3);
-    }
+    expression = get_expression_queue(1);
     postfix_expr = infix_2_postfix(&expression);
+    printf("CLEARS\n");
     generate_expression();
-    //free(&expression);
-    if(is_relational) {
-        gen_switch_operands();
-        gen_assign_types();
-        gen_typecheck_jumps();
-
-        gen_op1_is_int();
-        gen_op1_is_string();
-        gen_op1_is_float();
-        gen_ops_are_int(tokenQueue->First->rptr->rptr->value);
-        gen_ops_are_float(tokenQueue->First->rptr->rptr->value);
-        gen_ops_are_string(tokenQueue->First->rptr->rptr->value);
-
-
-        gen_int_float(tokenQueue->First->rptr->rptr->value);
-        gen_float_int(tokenQueue->First->rptr->rptr->value);
-        printf("LABEL $type_check_passed%i\n", typecheck_jumps_id++);
+    if (is_relational) {
         gen_relational_comparison(tokenQueue->First->rptr->rptr->value);
         gen_expression_to_bool();
     }
     printf("JUMPIFNEQ &else%i GF@_result bool@true\n", else_lbl_id);
 }
-
 
 int is_relational_op(char* val) {
     char* relational_ops[6] = {"==", "<=", ">=", "!=", ">", "<"};
@@ -267,14 +249,19 @@ void handle_else()  {
  */
 void handle_assignment()    {
     DLFirst(tokenQueue);
-    if(scope_nesting_lvl <= 0)
+    if(scope_nesting_lvl <= 0 && !is_duplicate_definition(tokenQueue->First->value, global_var_scope)) {
         DLInsertLast(global_var_scope, identifier, tokenQueue->First->value, -1);
+    }
+    else if (scope_nesting_lvl > 0 && !is_duplicate_definition(tokenQueue->First->value, local_var_scope))     {
+           DLInsertLast(local_var_scope, identifier, tokenQueue->First->value, -1);
+    }
     tDLList expression = get_expression_queue(2);
     if (tokenQueue->First->rptr->rptr->rptr->type == Operator)
         postfix_expr = infix_2_postfix(&expression);
     else
         Tpush(&postfix_expr, *tokenQueue->First->rptr->rptr);
 
+    printf("CLEARS\n");
     generate_expression();
     char* scope = get_variable_scope(tokenQueue->First->value);
     printf("MOVE %s@%s GF@_result\n", scope, tokenQueue->First->value);
@@ -285,21 +272,32 @@ void handle_assignment()    {
  * When program meets the line return my_var, this gets called
  */
 void handle_return()   {
-    if (local_var_scope->First->rptr != NULL &&
-        local_var_scope->First->rptr->type != EOL &&
-        local_var_scope->First->rptr->type != EoF)  {
+    if (tokenQueue->First->rptr != NULL &&
+        tokenQueue->First->rptr->type != EOL &&
+        tokenQueue->First->rptr->type != EoF)  {
 
-        char* scope = get_variable_scope(local_var_scope->First->rptr->value);
-        printf("MOVE LF@_retval %s@%s\n", scope, tokenQueue->First->value);
+        char* scope = get_variable_scope(tokenQueue->First->rptr->value);
+        printf("MOVE LF@_retval %s@%s\n", scope, tokenQueue->First->rptr->value);
     }
-    printf("%s", CDpop(code_gen_stack));
+    printf("JUMP *%s_INIT\n", current_func_lbl);
+    printf("LABEL &%s_INIT\n", current_func_lbl);
+    generate_variables_from_queue(local_var_scope, "TF");
+    DLDisposeList(local_var_scope);
+    DLInitList(local_var_scope);
+    printf("JUMP &%s\n", current_func_lbl);
+    printf("LABEL *%s_INIT\n", current_func_lbl);
+    current_func_lbl = "";
 }
 
 void handle_def() {
     char *lbl = tokenQueue->First->rptr->value;
-    //strcpy(lbl, tokenQueue->First->rptr->value);
+    current_func_lbl = lbl;
     printf("JUMP *%s\n", lbl); // jump to the end of function
+    printf("JUMP &%s_INIT\n", lbl);
     printf("LABEL &%s\n", lbl);
+
+    // generate variable declaration from thw whole scope
+
     printf("PUSHFRAME\n");
     generate_variable("_retval", "LF", local_var_scope);
     gen_function_def_args();
@@ -314,7 +312,8 @@ void handle_def() {
 }
 
 void handle_dedent()   {
-    printf("%s", CDpop(code_gen_stack));
+    printf("%s", CDtop(*code_gen_stack));
+    CDpop(code_gen_stack);
 }
 
 /**
@@ -347,12 +346,15 @@ void gen_print_method(int num_of_args) {
     printf("PUSHFRAME\n");
     printf("DEFVAR LF@_retval\n");
     printf("MOVE LF@_retval nil@nil\n");
-    for(int i = 1; i <= num_of_args; i++)
-        printf("WRITE LF@%i\n", i);
+    for(int i = 1; i <= num_of_args; i++) {
+        printf("WRITE LF@%%%i\n", i);
+    }
+    printf("WRITE string@\\010\n"); // put end of line
     printf("POPFRAME\n");
     printf("RETURN\n");
     printf("LABEL *$print%i_for_%i\n", print_lbl_id, num_of_args);
     printf("CALL &$print%i_for_%i\n", print_lbl_id, num_of_args);
+    print_lbl_id++;
 }
 
 char* get_type_from_value(Token *token)    {
@@ -388,18 +390,38 @@ void gen_function_def_args() {
  */
 int gen_function_call_args()   {
     //DLFirst(tokenQueue);
+    //int arg_is_string
     if(tokenQueue->Act->rptr != NULL)
         tokenQueue->Act = tokenQueue->Act->rptr->rptr;    // we're pointing at first argument
     else
         return 0;
     int arg_cnt = 0;
-    while (tokenQueue->Act != NULL && tokenQueue->Act->type != specialChar && tokenQueue->Act->type  != EOL) {
+    // in case arguments are not string, eg foo(a, b, 42)
+//    if (strcmp(tokenQueue->Act->value, "\"") == 0)
+//        DLSucc(tokenQueue);
+    while (tokenQueue->Act != NULL && tokenQueue->Act->type  != EOL && tokenQueue->Act->type != DEDENT) {
+        if (tokenQueue->Act->type == specialChar)   {
+      //      if (strcmp(tokenQueue->Act->value, "\"") == 0 || strcmp(tokenQueue->Act->value, "'") == 0)  {
+
+        //    } else
+                break;
+        }
         printf("DEFVAR TF@%%%i\n", ++arg_cnt);
         printf("MOVE TF@%%%i %s@%s\n", arg_cnt, get_type_from_value(tokenQueue->Act), tokenQueue->Act->value);
         DLSucc(tokenQueue);
         DLSucc(tokenQueue);
     }
     return arg_cnt;
+}
+
+int is_duplicate_definition(char *identifier, tDLList *queue) {
+    DLFirst(queue);
+    while(queue->Act != NULL)   {
+        if (strcmp(identifier, queue->Act->value) == 0)
+            return 1;
+        DLSucc(queue);
+    }
+    return 0;
 }
 
 /**
@@ -423,6 +445,7 @@ void prepare_line_of_tokens(tDLList *queue) {
         DLSucc(queue);
         free(queue->First);
         queue->First = queue->Act;
+        queue->First->lptr = NULL;
     }
     DLFirst(queue);
 }
@@ -434,8 +457,8 @@ void prepare_line_of_tokens(tDLList *queue) {
  * @param scope Current scope (GF, TF, LF)
  */
 void generate_variables_from_queue(tDLList *queue, char *scope) {
-
     DLFirst(queue);
+    //char defined[255];
     while(queue->Act != NULL)    {
         gen_var_declaration_code(queue->Act, scope);
         DLSucc(queue);
@@ -470,7 +493,7 @@ char* get_variable_scope(char* identifier)  {
  */
 void generate_expression() {
     int i = 0;
-    printf("CLEARS\n");
+//    printf("CLEARS\n");
     Token token;
     while (postfix_expr.arr[i] != NULL) {
         token = *postfix_expr.arr[i];
@@ -677,19 +700,17 @@ void gen_init() {
 void gen_code_from_line(line_type line) {
     prepare_line_of_tokens(tokenQueue);
     postfix_expr = TinitStack();
-    printf("\n\n");
+    printf("\n");
     switch(line)    {
         case def_line:
             scope_nesting_lvl++;
             handle_def();
             break;
         case function_call:
-            scope_nesting_lvl++;
             DLFirst(tokenQueue);
             handle_function_call();
             break;
         case function_call_with_assignment:
-            scope_nesting_lvl++;
             handle_function_call_with_assignment();
             break;
         case assignment:
@@ -702,7 +723,6 @@ void gen_code_from_line(line_type line) {
             handle_else();
             break;
         case dedent:
-            scope_nesting_lvl--;
             handle_dedent();
             break;
         case return_line:

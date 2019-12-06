@@ -43,10 +43,15 @@ typedef struct TStack   {
     Token* arr[255];
 } TStack;
 
+typedef struct CDStack_element {
+    char* value;
+    struct CDStack_element *next;
+}CDStack_element;
+
 // Stack used to track lines of code to be printed
 typedef struct CDStack  {
-    int top;
-    char* arr[255];
+    struct CDStack_element *top;
+    int size;
 } CDStack;
 
 #endif

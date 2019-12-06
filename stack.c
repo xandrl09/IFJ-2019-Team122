@@ -153,7 +153,8 @@ TStack infix_2_postfix(tDLList *queue) {
             if (item->value[0] == '(') {
                 lil_stack.arr[++lil_stack.top] = item;
             }
-            else if (item->type == identifier || item->type == integer || item->type == floatingPoint) {
+            else if (item->type == identifier || item->type == integer ||
+                    item->type == floatingPoint || item->type == string) {
                 postfix.arr[postfix.top++] = item;
             }
             else if (isOperator(item->value) == 1) {

@@ -33,6 +33,8 @@
  * LABEL $type_check_passed na konci typove kontroly operandu
  * LABEL &else42 a *else42
  * LABEL &_$INIT
+ * LABEL &foo_INIT
+ * LABEL *foo_INIT
  * LABEL &$inputi a *$inputi, obdobne pro inputs a inputf
  */
 
@@ -63,6 +65,8 @@ void gen_typecheck_jumps();
 char* get_type_from_value(Token *token);
 
 char* get_variable_scope(char* arg);
+
+int is_duplicate_definition(char *identifier, tDLList *queue);
 
 void gen_op1_is_int();
 void gen_op1_is_float();
