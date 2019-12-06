@@ -253,7 +253,7 @@ void handle_assignment()    {
         DLInsertLast(global_var_scope, identifier, tokenQueue->First->value, -1);
     }
     else if (scope_nesting_lvl > 0 && !is_duplicate_definition(tokenQueue->First->value, local_var_scope))     {
-           DLInsertLast(local_var_scope, identifier, tokenQueue->First->value, -1);
+        DLInsertLast(local_var_scope, identifier, tokenQueue->First->value, -1);
     }
     tDLList expression = get_expression_queue(2);
     if (tokenQueue->First->rptr->rptr->rptr->type == Operator)
@@ -375,7 +375,7 @@ void gen_function_def_args() {
     DLFirst(tokenQueue);
     tokenQueue->Act = tokenQueue->First->rptr->rptr->rptr; // first argument is now active
     int arg_cnt = 0;
-    while(tokenQueue->Act != NULL && tokenQueue->Act->type != specialChar)  {
+    while(tokenQueue->Act != NULL && tokenQueue->Act->type != specialChar && tokenQueue->Act->type != EOL)  {
         printf("DEFVAR LF@%s\n", tokenQueue->Act->value);
         printf("MOVE LF@%s LF@%%%i\n", tokenQueue->Act->value, ++arg_cnt);
         DLInsertLast(local_var_scope, nil, tokenQueue->Act->value, -1);
@@ -401,10 +401,10 @@ int gen_function_call_args()   {
 //        DLSucc(tokenQueue);
     while (tokenQueue->Act != NULL && tokenQueue->Act->type  != EOL && tokenQueue->Act->type != DEDENT) {
         if (tokenQueue->Act->type == specialChar)   {
-      //      if (strcmp(tokenQueue->Act->value, "\"") == 0 || strcmp(tokenQueue->Act->value, "'") == 0)  {
+            //      if (strcmp(tokenQueue->Act->value, "\"") == 0 || strcmp(tokenQueue->Act->value, "'") == 0)  {
 
-        //    } else
-                break;
+            //    } else
+            break;
         }
         printf("DEFVAR TF@%%%i\n", ++arg_cnt);
         printf("MOVE TF@%%%i %s@%s\n", arg_cnt, get_type_from_value(tokenQueue->Act), tokenQueue->Act->value);

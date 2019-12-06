@@ -91,8 +91,8 @@ void handle_if();
 void handle_while();
 void handle_else();
 void handle_inputi_line();
-void handle_inputf_line(); //TODO
-void handle_inputs_line(); //TODO
+void handle_inputf_line();
+void handle_inputs_line();
 void handle_eof();
 
 void gen_relational_comparison(char* op);
