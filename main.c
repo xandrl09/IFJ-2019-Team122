@@ -27,7 +27,8 @@ CDStack *code_gen_stack;
 int main(int argc, char* argv[])	{
     tokenQueue = malloc(sizeof(tDLList));
     DLInitList(tokenQueue);
-    createScanner();			
+    if (USING_PROG_ARGS)
+        createScanner(argv[1]);			
     init_symtable();
     code_gen_stack = CDinit_stack();
     gen_init();
