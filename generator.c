@@ -274,7 +274,8 @@ void handle_assignment()    {
 void handle_return()   {
     if (tokenQueue->First->rptr != NULL &&
         tokenQueue->First->rptr->type != EOL &&
-        tokenQueue->First->rptr->type != EoF)  {
+        tokenQueue->First->rptr->type != EoF &&
+        strcmp(tokenQueue->First->value, "return") == 0)  {
 
         char* scope = get_variable_scope(tokenQueue->First->rptr->value);
         printf("MOVE LF@_retval %s@%s\n", scope, tokenQueue->First->rptr->value);
@@ -292,6 +293,7 @@ void handle_return()   {
 }
 
 void handle_def() {
+    DLFirst(tokenQueue);
     char *lbl = tokenQueue->First->rptr->value;
     strcpy(current_func_lbl, lbl);
     printf("JUMP *%s\n", lbl); // jump to the end of function

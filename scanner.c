@@ -30,8 +30,8 @@ static char specialChars[NUMBER_OF_SPECIAL_CHARS] = {'(', ')', '[', ']', ',', ':
 static FILE *inputFile;
 
 
-int createScanner() {
-    inputFile = stdin;
+int createScanner(char *path) {
+    inputFile = fopen(path, "r");
     if (inputFile == NULL) {
         fprintf(stderr, "File cannot be opened!\n");
         return -1;
@@ -56,8 +56,11 @@ int getParserToken(T_token *token) {
     if (tokenQueue->Act == NULL) {
         //printQueueContents(tokenQueue);
         getLineOfTokens(tokenQueue);
+
     }
-}
+    if(tokenQueue->Act == NULL)
+        DLFirst(tokenQueue);
+    }
 
 
 void turnScannerTokensToParserTokens(Token *input, T_token *output) {
@@ -400,7 +403,7 @@ int isBlockComment(char *buffer) {
         return 1;
     } else if (strlen(buffer) > 3) {
         for (int i = strlen(buffer) - 3; i <= strlen(buffer) - 1; i++) {
-            if (buffer[i] != '\"')
+            if (buffer[i] != '"')
                 return 0;
         }
         return 1;
@@ -624,7 +627,7 @@ void getLineOfTokens(tDLList *tokenQueue) {
                     currentState = STATE_NUMBER;
                 } else if (receivedChar == '#') {
                     currentState = STATE_LINE_COMMENT;
-                } else if (receivedChar == '\"') {
+                } else if (receivedChar == '"') {
                     currentState = STATE_DOCSTRING;
                 } else if (isOperator(buffer) || receivedChar == '!') {
                     currentState = STATE_OPERATOR;
@@ -813,6 +816,7 @@ void getLineOfTokens(tDLList *tokenQueue) {
     handleEOF(tokenQueue, buffer, &currentState, positionInLine);
     tokenQueue->Act = tokenQueue->First;
 }
+
 
 
 
