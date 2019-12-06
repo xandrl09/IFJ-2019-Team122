@@ -42,6 +42,8 @@ generator.o: generator.c
 stack_cd.o: stack_cd.c
 	$(CC) $(FLAGS) stack_cd.c
 
+test:
+	./tests/test.sh
 
 clean:
 	rm -f $(OBJS) $(OUT)
