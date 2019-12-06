@@ -736,7 +736,6 @@ void gen_init() {
 void gen_code_from_line(line_type line) {
     prepare_line_of_tokens(tokenQueue);
     postfix_expr = TinitStack();
-    printf("\n");
     switch(line)    {
         case def_line:
             scope_nesting_lvl++;
