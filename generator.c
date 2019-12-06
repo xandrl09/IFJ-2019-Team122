@@ -734,6 +734,7 @@ void gen_init() {
  * @param line Line of Tokens representing current line in program
  */
 void gen_code_from_line(line_type line) {
+    Token *token = tokenQueue->Act;
     prepare_line_of_tokens(tokenQueue);
     postfix_expr = TinitStack();
     switch(line)    {
@@ -773,4 +774,5 @@ void gen_code_from_line(line_type line) {
         default:
             break;
     }
+    tokenQueue->Act = token;
 }
