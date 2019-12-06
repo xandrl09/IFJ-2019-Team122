@@ -22,18 +22,12 @@
 tDLList *tokenQueue;
 CDStack *code_gen_stack;
 
-void evaluateInput(int param)	{
-    if (param != 2)	{
-        fprintf(stderr, "Program failed during the evaluateInput func\n");
-        	exit(1);
-    }
-}
+
 
 int main(int argc, char* argv[])	{
     tokenQueue = malloc(sizeof(tDLList));
     DLInitList(tokenQueue);
-    createScanner();			//argv[1] == path
-    DLInitList(tokenQueue);
+    createScanner();			
     init_symtable();
     code_gen_stack = CDinit_stack();
     gen_init();
