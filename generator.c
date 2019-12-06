@@ -45,7 +45,7 @@ int else_lbl_id = 0;
 int print_lbl_id = 0;
 
 int scope_nesting_lvl = 0;
-char* current_func_lbl = "";
+char current_func_lbl[255] = "";
 
 
 void handle_inputs_line()   {
@@ -279,19 +279,21 @@ void handle_return()   {
         char* scope = get_variable_scope(tokenQueue->First->rptr->value);
         printf("MOVE LF@_retval %s@%s\n", scope, tokenQueue->First->rptr->value);
     }
+
     printf("JUMP *%s_INIT\n", current_func_lbl);
     printf("LABEL &%s_INIT\n", current_func_lbl);
+    //printf("CREATEFRAME\n");    //5:42 zmena - pokus o scope
     generate_variables_from_queue(local_var_scope, "TF");
     DLDisposeList(local_var_scope);
     DLInitList(local_var_scope);
     printf("JUMP &%s\n", current_func_lbl);
     printf("LABEL *%s_INIT\n", current_func_lbl);
-    current_func_lbl = "";
+    strcpy(current_func_lbl, "");
 }
 
 void handle_def() {
     char *lbl = tokenQueue->First->rptr->value;
-    current_func_lbl = lbl;
+    strcpy(current_func_lbl, lbl);
     printf("JUMP *%s\n", lbl); // jump to the end of function
     printf("JUMP &%s_INIT\n", lbl);
     printf("LABEL &%s\n", lbl);
@@ -299,7 +301,9 @@ void handle_def() {
     // generate variable declaration from thw whole scope
 
     printf("PUSHFRAME\n");
-    generate_variable("_retval", "LF", local_var_scope);
+    //generate_variable("_retval", "LF", local_var_scope); 5:49 - pokuus o scope
+    printf("DEFVAR LF@_retval\n");
+    printf("MOVE LF@_retval nil@nil\n");
     gen_function_def_args();
 
     // The function's code itself
@@ -332,7 +336,7 @@ void handle_function_call() {
     else if (strcmp(lbl, "inputs") == 0)
         handle_inputs_line();
     else    {
-        printf("CALL &%s\n", lbl);
+        printf("CALL &%s_INIT\n", lbl);
         printf("MOVE LF@_retval TF@_retval\n");
     }
 }
@@ -378,7 +382,7 @@ void gen_function_def_args() {
     while(tokenQueue->Act != NULL && tokenQueue->Act->type != specialChar && tokenQueue->Act->type != EOL)  {
         printf("DEFVAR LF@%s\n", tokenQueue->Act->value);
         printf("MOVE LF@%s LF@%%%i\n", tokenQueue->Act->value, ++arg_cnt);
-        DLInsertLast(local_var_scope, nil, tokenQueue->Act->value, -1);
+        //DLInsertLast(local_var_scope, nil, tokenQueue->Act->value, -1);
         DLSucc(tokenQueue);
         DLSucc(tokenQueue);
     }
