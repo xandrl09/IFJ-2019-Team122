@@ -352,6 +352,7 @@ void gen_print_method(int num_of_args) {
     printf("MOVE LF@_retval nil@nil\n");
     for(int i = 1; i <= num_of_args; i++) {
         printf("WRITE LF@%%%i\n", i);
+        printf("WRITE string@\\032\n");
     }
     printf("WRITE string@\\010\n"); // put end of line
     printf("POPFRAME\n");
@@ -361,14 +362,42 @@ void gen_print_method(int num_of_args) {
     print_lbl_id++;
 }
 
-char* get_type_from_value(Token *token)    {
+char* get_type_and_edit_value(Token *token)    {
     switch(token->type) {
-        case floatingPoint: return "float";
+        case floatingPoint:
+            sprintf(token->value, "%a", atof(token->value));
+            return "float";
         case integer: return "int";
-        case string: return "string";
+        case string:
+            turn_whitespace_to_ascii(token);
+            return "string";
         case identifier: return "LF";
         default: fprintf(stderr, "Encountered some strange token in generator, type: %i\n", token->type);
     }
+}
+
+void turn_whitespace_to_ascii(Token *token) {
+    char temp [255] = "";
+    strcpy(temp, token->value);
+    int i = 251;
+    for (i = 251; i >= 0; i--)  {
+        if (temp[i] == ' ') {
+            temp[i] = '\0';
+            strcat(temp, "\\032");
+            strcat(temp, token->value + i + 1);
+        }
+        else if (temp[i] == '\t')   {
+            temp[i] = '\0';
+            strcat(temp, "\\009");
+            strcat(temp, token->value + i + 1);
+        }
+        else if (temp[i] == '\n')   {
+            temp[i] = '\0';
+            strcat(temp, "\\010");
+            strcat(temp, token->value + i + 1);
+        }
+    }
+    strcpy(token->value, temp);
 }
 
 /**
@@ -411,7 +440,7 @@ int gen_function_call_args()   {
             break;
         }
         printf("DEFVAR TF@%%%i\n", ++arg_cnt);
-        printf("MOVE TF@%%%i %s@%s\n", arg_cnt, get_type_from_value(tokenQueue->Act), tokenQueue->Act->value);
+        printf("MOVE TF@%%%i %s@%s\n", arg_cnt, get_type_and_edit_value(tokenQueue->Act), tokenQueue->Act->value);
         DLSucc(tokenQueue);
         DLSucc(tokenQueue);
     }
@@ -511,7 +540,7 @@ void generate_expression() {
             char *scope = get_variable_scope(token.value);
             printf("PUSHS %s@%s\n", scope, token.value);
         } else { // token is literal
-            char *type = get_type_from_value(&token);
+            char *type = get_type_and_edit_value(&token);
             printf("PUSHS %s@%s\n", type, token.value);
         }
         i++;
@@ -580,6 +609,7 @@ void gen_ops_are_string(char *operator_value)   {
     else
         printf("EXIT int@4\n");
     printf("PUSHS GF@_result\n");
+    printf("JUMP $type_check_passed%i\n", typecheck_jumps_id);
 }
 
 void gen_ops_are_float(char *operator_value) {

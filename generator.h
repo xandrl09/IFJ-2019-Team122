@@ -62,7 +62,7 @@ void gen_switch_operands();
 void gen_assign_types();
 void gen_typecheck_jumps();
 
-char* get_type_from_value(Token *token);
+char* get_type_and_edit_value(Token *token);
 
 char* get_variable_scope(char* arg);
 
@@ -76,6 +76,8 @@ void gen_ops_are_float(char *operator_value);
 void gen_ops_are_string(char *operator_value);
 void gen_int_float(char* operator_value);
 void gen_float_int(char* operator_value);
+
+void turn_whitespace_to_ascii(Token *token);
 
 void gen_actual_computation(char* operator);
 void gen_expression_operation(char *operator_value);
