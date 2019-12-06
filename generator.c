@@ -661,8 +661,8 @@ void gen_expression_operation(char *operator_value) {
 
 void gen_op1_is_float() {
     printf("LABEL $op1_is_float%i\n", typecheck_jumps_id);
-    printf("JUMPIFEQ $ops_are_int%i GF@op2type string@int\n", typecheck_jumps_id);
-    printf("JUMPIFEQ $ops_are_float%i GF@op2type string@float\n", typecheck_jumps_id);
+    printf("JUMPIFEQ $float_int%i GF@$op2type string@int\n", typecheck_jumps_id);
+    printf("JUMPIFEQ $ops_are_float%i GF@$op2type string@float\n", typecheck_jumps_id);
     printf("EXIT int@4\n"); // in case op1 is int and op2 is string
 }
 
