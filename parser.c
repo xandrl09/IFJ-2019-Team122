@@ -73,7 +73,7 @@ if (data->token.type != (_type)) errSyn()
                 CHECK_TYPE(T_EOL);
                 GET_TOKEN();
             }
-
+            gen_code_from_line(return_line);
             return main_body(data);
 
         case T_IF:
