@@ -115,9 +115,9 @@ void assignTokenType(T_token *out_token, Token in_token) {
         case builtInFunc:
             if (strcmp(in_token.value, "inputs") == 0)
                 out_token->type = T_INPUTS;
-            else if (strcmp(in_token.value, "intputi") == 0)
+            else if (strcmp(in_token.value, "inputi") == 0)
                 out_token->type = T_INPUTI;
-            else if (strcmp(in_token.value, "intputf") == 0)
+            else if (strcmp(in_token.value, "inputf") == 0)
                 out_token->type = T_INPUTF;
             else if (strcmp(in_token.value, "print") == 0)
                 out_token->type = T_PRINT;
