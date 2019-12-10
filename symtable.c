@@ -66,7 +66,7 @@ symtable* symtable_init(int size) {
  */
 symbol* create_symbol_int(char* identifier, char* value) {
     symbol *sym = init_symbol();
-    sym->identifier = identifier;
+    strcpy(sym->identifier, identifier);
     sym->type = INT;
     sym->value = value;
     init_param(sym);
@@ -80,7 +80,7 @@ symbol* create_symbol_int(char* identifier, char* value) {
  */
 symbol* create_symbol_float(char* identifier, char* value) {
     symbol *sym = init_symbol();
-    sym->identifier = identifier;
+    strcpy(sym->identifier, identifier);
     sym->type = FLOAT;
     sym->value = value;
     init_param(sym);
@@ -94,7 +94,7 @@ symbol* create_symbol_float(char* identifier, char* value) {
  */
 symbol* create_symbol_function(char* identifier) {
     symbol *sym = init_symbol();
-    sym->identifier = identifier;
+    strcpy(sym->identifier, identifier);
     sym->type = FUNCTION;
     sym->value = NULL;
     init_param(sym);
@@ -108,7 +108,7 @@ symbol* create_symbol_function(char* identifier) {
  */
 symbol* create_symbol_string(char* identifier, char* value) {
     symbol *sym = init_symbol();
-    sym->identifier = identifier;
+    strcpy(sym->identifier, identifier);
     sym->type = STRING;
     sym->value = value;
     init_param(sym);
@@ -122,7 +122,7 @@ symbol* create_symbol_string(char* identifier, char* value) {
  */
 symbol* create_symbol_nil(char* identifier) {
     symbol *sym = init_symbol();
-    sym->identifier = identifier;
+    strcpy(sym->identifier, identifier);
     sym->type = NIL;
     sym->value = NULL;
     init_param(sym);
@@ -163,7 +163,6 @@ void TS_push(symtable *table) {
  * Popnutí tabulky ze stacku tabulek - dle potřeby možno změnit aby vracela tabulku, co popla
  */
 void TS_pop() {
-    // symtable *tmp = stack->sym_table[stack->top];
     symtable_delete(stack->sym_table[stack->top]);
     stack->sym_table[stack->top--] = NULL;
     // return *tmp;
@@ -277,11 +276,9 @@ symbol *search_sym(symtable *table, char* identifier) {
         symbol* tmp = (*table).sym[hash_num];
 
         while (tmp != NULL) {
-            if(table->sym[hash_num]->identifier != NULL) {
                 if (strcmp(table->sym[hash_num]->identifier, identifier) == 0) {
                     return tmp;
                 }
-            }
             tmp = (*table).sym[hash_num]->next_sym;
         }
         return NULL;
@@ -385,7 +382,7 @@ void symbols_destroy(symtable *table) {
                 if(table->sym[i]->type == FUNCTION) {
                     params_destroy(table->sym[i]);
                 }
-                table->sym[i]->identifier = NULL;
+                strcpy(table->sym[i]->identifier, "");
                 table->sym[i]->type = NIL;
                 table->sym[i]->value = NULL;
                 table->sym[i]->next_sym = NULL;
@@ -403,7 +400,7 @@ void symbols_destroy(symtable *table) {
 symbol *init_symbol() {
     symbol *tmp = malloc(sizeof(symbol));
     if (tmp != NULL) {
-        tmp->identifier = NULL;
+        strcpy(tmp->identifier, "");
         tmp->type = NIL;
         tmp->value = NULL;
         init_param(tmp);

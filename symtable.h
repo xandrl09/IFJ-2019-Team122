@@ -39,7 +39,7 @@ typedef struct parameter {
 } parameter;
 
 typedef struct symbol {
-	char* identifier;
+	char identifier[255];
     ST_type type;
     char* value;
 	parameter *param[255];
