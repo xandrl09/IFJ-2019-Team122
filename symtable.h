@@ -41,7 +41,7 @@ typedef struct parameter {
 typedef struct symbol {
 	char identifier[255];
     ST_type type;
-    char* value;
+    char value[255];
 	parameter *param[255];
 	struct symbol *next_sym;
 	struct symbol *prev_sym;

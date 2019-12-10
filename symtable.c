@@ -68,7 +68,7 @@ symbol* create_symbol_int(char* identifier, char* value) {
     symbol *sym = init_symbol();
     strcpy(sym->identifier, identifier);
     sym->type = INT;
-    sym->value = value;
+    strcpy(sym->value, value);
     init_param(sym);
     sym->next_sym = NULL;
     sym->prev_sym = NULL;
@@ -82,7 +82,7 @@ symbol* create_symbol_float(char* identifier, char* value) {
     symbol *sym = init_symbol();
     strcpy(sym->identifier, identifier);
     sym->type = FLOAT;
-    sym->value = value;
+    strcpy(sym->value, value);
     init_param(sym);
     sym->next_sym = NULL;
     sym->prev_sym = NULL;
@@ -96,7 +96,7 @@ symbol* create_symbol_function(char* identifier) {
     symbol *sym = init_symbol();
     strcpy(sym->identifier, identifier);
     sym->type = FUNCTION;
-    sym->value = NULL;
+    strcpy(sym->value, "");
     init_param(sym);
     sym->next_sym = NULL;
     sym->prev_sym = NULL;
@@ -110,7 +110,7 @@ symbol* create_symbol_string(char* identifier, char* value) {
     symbol *sym = init_symbol();
     strcpy(sym->identifier, identifier);
     sym->type = STRING;
-    sym->value = value;
+    strcpy(sym->value, value);
     init_param(sym);
     sym->next_sym = NULL;
     sym->prev_sym = NULL;
@@ -124,7 +124,7 @@ symbol* create_symbol_nil(char* identifier) {
     symbol *sym = init_symbol();
     strcpy(sym->identifier, identifier);
     sym->type = NIL;
-    sym->value = NULL;
+    strcpy(sym->value, "");
     init_param(sym);
     sym->next_sym = NULL;
     sym->prev_sym = NULL;
@@ -304,7 +304,7 @@ void insert_symbol(symtable *table, symbol *sym) {
         } else {
             symbol *tmp = table->sym[hash_num];
             if (tmp->identifier == sym->identifier) {
-                table->sym[hash_num]->value = tmp->value;
+                strcpy(table->sym[hash_num]->value, tmp->value);
                 return;
             }
             table->sym[hash_num]->next_sym = tmp;
@@ -384,7 +384,7 @@ void symbols_destroy(symtable *table) {
                 }
                 strcpy(table->sym[i]->identifier, "");
                 table->sym[i]->type = NIL;
-                table->sym[i]->value = NULL;
+                strcpy(table->sym[i]->value, "");
                 table->sym[i]->next_sym = NULL;
                 table->sym[i]->prev_sym = NULL;
             }
@@ -402,7 +402,7 @@ symbol *init_symbol() {
     if (tmp != NULL) {
         strcpy(tmp->identifier, "");
         tmp->type = NIL;
-        tmp->value = NULL;
+        strcpy(tmp->value, "");
         init_param(tmp);
         tmp->next_sym = NULL;
         tmp->prev_sym = NULL;
