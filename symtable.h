@@ -66,6 +66,7 @@ void init_param(symbol *symbol);
  * Práce se stackem tabulek
  */
 void push_lower_scope();
+void pop_lower_scope();
 void TS_push(symtable *table);
 void TS_pop();
 void drop_symtable();
