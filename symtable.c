@@ -67,9 +67,11 @@ symtable* symtable_init(int size) {
  */
 symbol* create_symbol_int(char* identifier, char* value) {
     symbol *sym = init_symbol();
-    sym->identifier = identifier;
+    strcpy(sym->identifier, identifier);
+    //sym->identifier = identifier;
     sym->type = INT;
-    sym->value = value;
+    strcpy(sym->value, value);
+    //sym->value = value;
     init_param(sym);
     sym->next_sym = NULL;
     sym->prev_sym = NULL;
@@ -95,7 +97,8 @@ symbol* create_symbol_float(char* identifier, char* value) {
  */
 symbol* create_symbol_function(char* identifier) {
     symbol *sym = init_symbol();
-    sym->identifier = identifier;
+    strcpy(sym->identifier, identifier);
+    //sym->identifier = identifier;
     sym->type = FUNCTION;
     sym->value = NULL;
     init_param(sym);
@@ -109,9 +112,11 @@ symbol* create_symbol_function(char* identifier) {
  */
 symbol* create_symbol_string(char* identifier, char* value) {
     symbol *sym = init_symbol();
-    sym->identifier = identifier;
+    strcpy(sym->identifier, identifier);
+    //sym->identifier = identifier;
     sym->type = STRING;
-    sym->value = value;
+    strcpy(sym->value, value);
+    //sym->value = value;
     init_param(sym);
     sym->next_sym = NULL;
     sym->prev_sym = NULL;
@@ -123,7 +128,8 @@ symbol* create_symbol_string(char* identifier, char* value) {
  */
 symbol* create_symbol_nil(char* identifier) {
     symbol *sym = init_symbol();
-    sym->identifier = identifier;
+    strcpy(sym->identifier, identifier);
+    //sym->identifier = identifier;
     sym->type = NIL;
     sym->value = NULL;
     init_param(sym);
@@ -322,7 +328,7 @@ void insert_symbol(symtable *table, symbol *sym) {
 /*
  * Současné vytvoření a vložení symbolu do tabulky
  */
-void create_insert_symbol( char *identifier,ST_type type, char *value) {
+void create_insert_symbol( char *identifier, ST_type type, char *value) {
     if(stack != NULL) {
         if(identifier != NULL) {
             if(type == INT) {
@@ -400,7 +406,7 @@ void symbols_destroy(symtable *table) {
 symbol *init_symbol() {
 	symbol *tmp = malloc(sizeof(symbol));
 	if (tmp != NULL) {
-        tmp->identifier = NULL;
+	    tmp->identifier = NULL;
         tmp->type = NIL;
         tmp->value = NULL;
         init_param(tmp);
