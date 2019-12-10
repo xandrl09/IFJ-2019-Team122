@@ -83,7 +83,8 @@ symbol* create_symbol_int(char* identifier, char* value) {
  */
 symbol* create_symbol_float(char* identifier, char* value) {
     symbol *sym = init_symbol();
-    sym->identifier = identifier;
+    strcpy(sym->identifier, identifier);
+    //sym->identifier = identifier;
     sym->type = FLOAT;
     sym->value = value;
     init_param(sym);
