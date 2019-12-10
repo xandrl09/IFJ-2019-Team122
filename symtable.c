@@ -110,8 +110,7 @@ symbol* create_symbol_string(char* identifier, char* value) {
     symbol *sym = init_symbol();
     sym->identifier = identifier;
     sym->type = STRING;
-    strcpy(sym->value, value);
-    //sym->value = value;
+    sym->value = value;
     init_param(sym);
     sym->next_sym = NULL;
     sym->prev_sym = NULL;
