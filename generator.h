@@ -68,6 +68,8 @@ char* get_variable_scope(char* arg);
 
 int is_duplicate_definition(char *identifier, tDLList *queue);
 
+void print_gen_debug_info(line_type line);
+char* get_line_type_string(line_type line);
 void gen_op1_is_int();
 void gen_op1_is_float();
 void gen_op1_is_string();

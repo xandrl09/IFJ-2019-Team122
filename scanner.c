@@ -33,7 +33,7 @@ static FILE *inputFile;
 int createScanner(char *path) {
     inputFile = fopen(path, "r");
     if (inputFile == NULL) {
-        fprintf(stderr, "File cannot be opened!\n");
+        fprintf(stderr, "File cannot be opened! If you want to use stdin, set USING_PROG_ARGS to 1 in scanner.h\n");
         return -1;
     }
     indentationStack = initStack();

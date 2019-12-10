@@ -749,7 +749,7 @@ char* get_line_type_string(line_type line)  {
 
 void print_gen_debug_info(line_type line) {
     DLFirst(tokenQueue);
-    printf("~~~~~ Current line: "  );
+    printf("\n~~~~~ Current line: "  );
     while(tokenQueue->Act != NULL)  {
         printf("%s ", tokenQueue->Act->value);
         DLSucc(tokenQueue);
@@ -762,9 +762,9 @@ void print_gen_debug_info(line_type line) {
  * @param line Line of Tokens representing current line in program
  */
 void gen_code_from_line(line_type line) {
-    printf("\n");
     Token *token = tokenQueue->Act;
-    print_gen_debug_info(line);
+
+    //print_gen_debug_info(line);
     prepare_line_of_tokens(tokenQueue);
     postfix_expr = TinitStack();
     switch(line)    {
