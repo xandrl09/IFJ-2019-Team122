@@ -148,6 +148,10 @@ void push_lower_scope() {
     TS_push(smtbl);
 }
 
+void pop_lower_scope() {
+    TS_pop();
+}
+
 /*
  * Pushnutí tabulky na stack tabulek
  */
