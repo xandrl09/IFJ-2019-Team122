@@ -24,6 +24,12 @@ if (data->token.type != (_type)) errSyn()
 /// ==================================================================
 
 
+/**
+ * Function process main body of program.
+ * There can be definitions of functions, code and end of file.
+ * @param data
+ * @return
+ */
  int main_body(MainData* data)
 {
     GET_TOKEN();
@@ -37,16 +43,16 @@ if (data->token.type != (_type)) errSyn()
             CHECK_TYPE(T_ID);
 
             /// pokud již byla funkce definována fixme
-//            if(is_in_stack( data->ptoken->data->string))
-//            {
-//                errSemDef();
-//            }
-//            /// uložení funkce do symtable
-//            else
-//            {
-//                create_insert_symbol(data->ptoken->data->string, FUNCTION,  NULL);
-//                data->function_name = data->ptoken->data->string;
-//            }
+            if(is_in_stack( data->ptoken->data->string))
+            {
+                errSemDef();
+            }
+            /// uložení funkce do symtable
+            else
+            {
+                create_insert_symbol(data->ptoken->data->string, FUNCTION,  NULL);
+                //data->function_name = data->ptoken->data->string;
+            }
 
             GET_TOKEN();
             CHECK_TYPE(T_LBRACK);
@@ -107,6 +113,11 @@ if (data->token.type != (_type)) errSyn()
 }
 
 
+/**
+ * Function process code in body of function, which is currently defined.
+ * @param data
+ * @return
+ */
  int main_func(MainData* data)
 {
     switch (data->token.type)
@@ -154,6 +165,11 @@ if (data->token.type != (_type)) errSyn()
 }
 
 
+/**
+ * Function process first param of function, which is currently defined.
+ * @param data
+ * @return
+ */
  int def_func_params(MainData* data)
 {
     switch (data->token.type)
@@ -176,6 +192,11 @@ if (data->token.type != (_type)) errSyn()
 }
 
 
+/**
+ * Function process params of function, which is currently defined.
+ * @param data
+ * @return
+ */
  int func_param_x(MainData* data)
 {
     switch (data->token.type)
@@ -200,6 +221,11 @@ if (data->token.type != (_type)) errSyn()
 }
 
 
+/**
+ * Function process code in main body of program.
+ * @param data
+ * @return
+ */
  int main_(MainData* data)
 {
     switch (data->token.type)
@@ -241,6 +267,11 @@ if (data->token.type != (_type)) errSyn()
 }
 
 
+/**
+ * Function process code: calls of iner functions, if, while and expressions.
+ * @param data
+ * @return
+ */
  int code(MainData* data)
 {
     switch (data->token.type)
@@ -257,7 +288,7 @@ if (data->token.type != (_type)) errSyn()
             inner_func(data);
             GET_TOKEN();
             CHECK_TYPE(T_EOL);
-gen_code_from_line(function_call);
+            gen_code_from_line(function_call);
             return SYNTAX_OK;
 
         case T_INT:
@@ -333,7 +364,7 @@ gen_code_from_line(function_call);
                 GET_TOKEN();
             }
             //CHECK_TYPE(T_DEDENT);
-gen_code_from_line(else_line); 
+            gen_code_from_line(else_line);
             return SYNTAX_OK;
 
         case T_WHILE:
@@ -343,7 +374,7 @@ gen_code_from_line(else_line);
             expression(data);
 
             CHECK_TYPE(T_COLON);
-gen_code_from_line(while_line);
+            gen_code_from_line(while_line);
             GET_TOKEN();
             CHECK_TYPE(T_EOL);
 
@@ -383,9 +414,13 @@ gen_code_from_line(while_line);
     }
 }
 
-/// ID
+/**
+ * Progrm goes there after ID token is got from scanner.
+ * @param data
+ * @return
+ */
  int identif(MainData* data)
-{
+{/// ID
     switch (data->token.type)
     {
         case T_EQ_COMP:
@@ -438,9 +473,9 @@ gen_code_from_line(while_line);
 //                    return SEM_ERR_UNDEFINED_VAR;
 //                }
 //            }
-GET_TOKEN();
+            GET_TOKEN();
             call_func_params(data);
-gen_code_from_line(function_call);
+            gen_code_from_line(function_call);
             GET_TOKEN();
             CHECK_TYPE(T_EOL);
 
@@ -473,9 +508,13 @@ gen_code_from_line(function_call);
 }
 
 
-///ID =
+/**
+ * Program goes there after ID token and = token.
+ * @param data
+ * @return
+ */
  int ins(MainData* data)
-{
+{///ID =
     switch (data->token.type)
     {
         case T_INT:
@@ -483,7 +522,7 @@ gen_code_from_line(function_call);
         case T_STRING:
             // rule 18: <ins> -> EXPR EOL
            
-gen_code_from_line(assignment);
+            gen_code_from_line(assignment);
             expression(data);
 
             CHECK_TYPE(T_EOL);
@@ -503,17 +542,21 @@ gen_code_from_line(assignment);
 }
 
 
-///ID = ID
+/**
+ * Program goes there after ID, = and ID tokens.
+ * @param data
+ * @return
+ */
  int ins_id(MainData* data)
-{
+{///ID = ID
     switch (data->token.type)
     {
         case T_LBRACK:
-            // rule 20: <ins_id> -> <call_func_params> EOL
+            /// rule 20: <ins_id> -> <call_func_params> EOL
             
-GET_TOKEN();
+            GET_TOKEN();
             call_func_params(data);
-gen_code_from_line(function_call_with_assignment);
+            gen_code_from_line(function_call_with_assignment);
             GET_TOKEN();
             CHECK_TYPE(T_EOL);
             ///second_token = function ID
@@ -587,14 +630,14 @@ gen_code_from_line(function_call_with_assignment);
         case T_SUB:
         case T_MUL:
         case T_DIV:
-            // pravidlo 21: <ins_id> -> EXPR EOL
+            /// pravidlo 21: <ins_id> -> EXPR EOL
            
 
             data->third_token = data->second_token;
             data->second_token = data->token;
 
             expression(data);
- //gen_code_from_line(assignment);
+            //gen_code_from_line(assignment);
             CHECK_TYPE(T_EOL);
             return SYNTAX_OK;
 
@@ -605,6 +648,11 @@ gen_code_from_line(function_call_with_assignment);
 }
 
 
+/**
+ * Function process first param of called function.
+ * @param data
+ * @return
+ */
  int call_func_params(MainData* data)
 {
     switch (data->token.type)
@@ -661,6 +709,11 @@ gen_code_from_line(function_call_with_assignment);
 }
 
 
+/**
+ * Function process params of called function.
+ * @param data
+ * @return
+ */
  int call_func_param_x(MainData* data)
 {
     switch (data->token.type)
@@ -689,6 +742,11 @@ gen_code_from_line(function_call_with_assignment);
 }
 
 
+/**
+ * Function process buildin functions.
+ * @param data
+ * @return
+ */
  int inner_func(MainData* data)
 {
  //gen_code_from_line(function_call);   
@@ -844,6 +902,12 @@ gen_code_from_line(function_call_with_assignment);
 }
 
 
+/**
+ * Handles terms in function print.
+ * Program goes there, if print have 2 or more terms.
+ * @param data
+ * @return
+ */
  int term(MainData* data)
 {
     switch (data->token.type)
@@ -873,6 +937,10 @@ gen_code_from_line(function_call_with_assignment);
 }
 
 
+/**
+ * Main function of parser.
+ * @return SYNTAX_OK when no errors
+ */
 int parse()
 {
     //extern table_stack *stack;
