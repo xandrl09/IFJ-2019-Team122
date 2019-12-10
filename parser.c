@@ -569,10 +569,10 @@ if (data->token.type != (_type)) errSyn()
     {
         case T_LBRACK:
             /// rule 20: <ins_id> -> <call_func_params> EOL
-            
+            gen_code_from_line(function_call_with_assignment);
             GET_TOKEN();
             call_func_params(data);
-            gen_code_from_line(function_call_with_assignment);
+
             GET_TOKEN();
             CHECK_TYPE(T_EOL);
             ///second_token = function ID
@@ -647,13 +647,13 @@ if (data->token.type != (_type)) errSyn()
         case T_MUL:
         case T_DIV:
             /// pravidlo 21: <ins_id> -> EXPR EOL
-           
 
+            gen_code_from_line(assignment);
             data->third_token = data->second_token;
             data->second_token = data->token;
 
             expression(data);
-            //gen_code_from_line(assignment);
+
             CHECK_TYPE(T_EOL);
             return SYNTAX_OK;
 
