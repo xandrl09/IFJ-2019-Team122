@@ -285,10 +285,12 @@ if (data->token.type != (_type)) errSyn()
         case T_ORD:
         case T_CHR:
             /// pravidlo 10: <code> -> <inner_func> EOL
+            gen_code_from_line(function_call);
             inner_func(data);
+            
             GET_TOKEN();
             CHECK_TYPE(T_EOL);
-            gen_code_from_line(function_call);
+
             return SYNTAX_OK;
 
         case T_INT:
@@ -304,12 +306,12 @@ if (data->token.type != (_type)) errSyn()
 
         case T_IF:
             /// pravidlo 12: <code> -> if <expr> : EOL INDENT <main> DEDENT else : EOL INDENT <main>  EOL DEDENT
-            
+            gen_code_from_line(if_line);
             GET_TOKEN();
             expression(data);
 
             CHECK_TYPE(T_COLON);
-            gen_code_from_line(if_line);
+
 
             GET_TOKEN();
             CHECK_TYPE(T_EOL);
@@ -371,10 +373,11 @@ if (data->token.type != (_type)) errSyn()
             /// pravidlo 13: <code> -> while <expr> : EOL INDENT <main>   EOL DEDENT
             
             GET_TOKEN();
+            gen_code_from_line(while_line);
             expression(data);
 
             CHECK_TYPE(T_COLON);
-            gen_code_from_line(while_line);
+
             GET_TOKEN();
             CHECK_TYPE(T_EOL);
 
@@ -473,9 +476,10 @@ if (data->token.type != (_type)) errSyn()
 //                    return SEM_ERR_UNDEFINED_VAR;
 //                }
 //            }
+            gen_code_from_line(function_call);
             GET_TOKEN();
             call_func_params(data);
-            gen_code_from_line(function_call);
+
             GET_TOKEN();
             CHECK_TYPE(T_EOL);
 
@@ -539,10 +543,12 @@ if (data->token.type != (_type)) errSyn()
         case T_INPUTI:
         case T_INPUTF:
         case T_INPUTS:
+            gen_code_from_line(function_call_with_assignment);
             inner_func(data);
+
             GET_TOKEN();
             CHECK_TYPE(T_EOL);
-            gen_code_from_line(function_call_with_assignment);
+
             return SYNTAX_OK;
 
         default:
