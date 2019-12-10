@@ -397,9 +397,9 @@ void symbols_destroy(symtable *table) {
  * Vytvoří rámec pro nový symbol
 */
 symbol *init_symbol() {
-	symbol *tmp = malloc(sizeof(symbol));
-	if (tmp != NULL) {
-	    tmp->identifier = NULL;
+    symbol *tmp = malloc(sizeof(symbol));
+    if (tmp != NULL) {
+        tmp->identifier = NULL;
         tmp->type = NIL;
         tmp->value = NULL;
         init_param(tmp);
@@ -407,10 +407,10 @@ symbol *init_symbol() {
         tmp->prev_sym = NULL;
         return tmp;
     }
-	else {
-	    errInter();
-		return NULL;
-	}
+    else {
+        errInter();
+        return NULL;
+    }
 }
 
 /*
@@ -533,7 +533,7 @@ void print_stack() {
                             int k = 0;
                             if(sym->param[k] == NULL) {
                                 printf("No arguments for function %s\n", sym->identifier);
-                                return;
+                                continue;
                             }
                             while(sym->param[k] != NULL) {
                                 if(sym->param[k]->type == INT) {
