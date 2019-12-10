@@ -183,7 +183,8 @@ void drop_symtable() {
  * Prohledá celý stack tabulek, jestli nenajde proměnnou 'identifier' - vrací bool
  */
 bool is_in_stack(char *identifier) {
-    if(search_stack(identifier) != NULL) {
+    symbol *tmp = search_stack(identifier);
+    if(tmp != NULL) {
         return 1;
     }
     else
