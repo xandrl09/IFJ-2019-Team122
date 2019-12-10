@@ -535,6 +535,16 @@ if (data->token.type != (_type)) errSyn()
 
             return ins_id(data);
 
+
+        case T_INPUTI:
+        case T_INPUTF:
+        case T_INPUTS:
+            inner_func(data);
+            GET_TOKEN();
+            CHECK_TYPE(T_EOL);
+            gen_code_from_line(function_call_with_assignment);
+            return SYNTAX_OK;
+
         default:
             errSyn();
             return SYNTAX_ERROR;
