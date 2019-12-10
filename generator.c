@@ -16,7 +16,7 @@
  * Closing labels are marked with *
  * Function arguments are marked with % and appropriate number, eg. %1, %2 etc.0
  * Return value is always called _retval
- * Flow control labels are marked with [&,*]_$, eg. &_$IF0, *_$WHILE32
+ * Flow control labels are marked with [&,*]_$, eg. &_$IF0, &_$WHILE32
  * &_$bool1 - used in gen_expression_to_bool, only one instance
  * &_$nil1 - used in gen_expression_to_bool, only one instance
  * $op1, $op2, $op1type, $op2type
@@ -371,6 +371,7 @@ char* get_type_and_edit_value(Token *token)    {
             return "float";
         case integer: return "int";
         case string:
+        case docString:
             turn_whitespace_to_ascii(token);
             return "string";
         case identifier: return "LF";
@@ -729,12 +730,41 @@ void gen_init() {
     //*code_gen_stack = CDinit_stack(result);
 }
 
+char* get_line_type_string(line_type line)  {
+    switch(line)    {
+        case def_line: return "def_line";
+        case function_call_with_assignment: return "function_call_with_assignment";
+        case function_call: return "function_call";
+        case assignment: return "assignment";
+        case if_line: return "if_line";
+        case else_line: return "else_line";
+        case dedent: return "dedent";
+        case return_line: return "return_line";
+        case while_line: return "while_line";
+        case end_of_feed: return "end_of_feed";
+        default:
+            printf("Detected unsupported line_type %i. Napis Markovi :^)\n", line);
+    }
+}
+
+void print_gen_debug_info(line_type line) {
+    DLFirst(tokenQueue);
+    printf("~~~~~ Current line: "  );
+    while(tokenQueue->Act != NULL)  {
+        printf("%s ", tokenQueue->Act->value);
+        DLSucc(tokenQueue);
+    }
+    printf("|||  line_type called: %s ~~~~~~\n", get_line_type_string(line));
+}
+
 /**
  * @brief Main function of code generator, works with global tokenQueue
  * @param line Line of Tokens representing current line in program
  */
 void gen_code_from_line(line_type line) {
+    printf("\n");
     Token *token = tokenQueue->Act;
+    print_gen_debug_info(line);
     prepare_line_of_tokens(tokenQueue);
     postfix_expr = TinitStack();
     switch(line)    {
