@@ -365,6 +365,7 @@ if (data->token.type != (_type)) errSyn()
                 CHECK_TYPE(T_EOL);
                 GET_TOKEN();
             }
+            gen_code_from_line(dedent);
             //CHECK_TYPE(T_DEDENT);
 
             return SYNTAX_OK;
@@ -393,6 +394,7 @@ if (data->token.type != (_type)) errSyn()
                 CHECK_TYPE(T_EOL);
                 GET_TOKEN();
             }
+            gen_code_from_line(dedent);
             //CHECK_TYPE(T_DEDENT);
             return SYNTAX_OK;
 
