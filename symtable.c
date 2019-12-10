@@ -512,7 +512,6 @@ void params_destroy(symbol *symbol) {
         else
             break;
     }
-    free(symbol->param);
 }
 
 unsigned int hash_function(char* target, unsigned int tsize, unsigned int seed) {
