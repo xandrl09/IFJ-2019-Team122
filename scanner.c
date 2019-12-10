@@ -60,7 +60,7 @@ int getParserToken(T_token *token) {
     }
     if(tokenQueue->Act == NULL)
         DLFirst(tokenQueue);
-    }
+}
 
 
 void turnScannerTokensToParserTokens(Token *input, T_token *output) {
@@ -330,10 +330,10 @@ void handleEOF(tDLList *tokenQueue, char *buffer, enum stateMachineStates *state
             }
             break;
     }
-    generateDEDENTTokens(tokenQueue, 0);
-    if (tokenQueue->Last != NULL && tokenQueue->Last->type != EOL) {
+    if (tokenQueue->Last != NULL && tokenQueue->Last->type != EOL)
         saveTokenAndReset(tokenQueue, EOL, "", state, positionInLine++);
-    }
+
+    generateDEDENTTokens(tokenQueue, 0);
     saveTokenAndReset(tokenQueue, EoF, "", state, positionInLine);
 }
 
@@ -751,7 +751,10 @@ void getLineOfTokens(tDLList *tokenQueue) {
                 break;
 
             case STATE_OPERATOR:    // state for operator
-                if (receivedChar != '=' && previousChar == '!') {
+                if (isDigit(receivedChar) && previousChar == '-')   {
+                    currentState = STATE_NUMBER;
+                }
+                else if (receivedChar != '=' && previousChar == '!') {
                     if (!isWhitespace(receivedChar))
                         returnLastCharToInput(buffer, receivedChar);
                     currentState = STATE_ERROR;
@@ -815,8 +818,8 @@ void getLineOfTokens(tDLList *tokenQueue) {
     }
     handleEOF(tokenQueue, buffer, &currentState, positionInLine);
     tokenQueue->Act = tokenQueue->First;
+    //printQueueContents(tokenQueue);
 }
-
 
 
 
