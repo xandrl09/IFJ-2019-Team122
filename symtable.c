@@ -12,7 +12,6 @@
 #include "symtable.h"
 #include "err.h"
 
-
 /*
  * Inicializuje stack pro tabulky symbolů (scopes)
  * Na začátku v něm nic není
@@ -67,11 +66,9 @@ symtable* symtable_init(int size) {
  */
 symbol* create_symbol_int(char* identifier, char* value) {
     symbol *sym = init_symbol();
-    strcpy(sym->identifier, identifier);
-    //sym->identifier = identifier;
+    sym->identifier = identifier;
     sym->type = INT;
-    strcpy(sym->value, value);
-    //sym->value = value;
+    sym->value = value;
     init_param(sym);
     sym->next_sym = NULL;
     sym->prev_sym = NULL;
@@ -83,8 +80,7 @@ symbol* create_symbol_int(char* identifier, char* value) {
  */
 symbol* create_symbol_float(char* identifier, char* value) {
     symbol *sym = init_symbol();
-    strcpy(sym->identifier, identifier);
-    //sym->identifier = identifier;
+    sym->identifier = identifier;
     sym->type = FLOAT;
     sym->value = value;
     init_param(sym);
@@ -98,8 +94,7 @@ symbol* create_symbol_float(char* identifier, char* value) {
  */
 symbol* create_symbol_function(char* identifier) {
     symbol *sym = init_symbol();
-    strcpy(sym->identifier, identifier);
-    //sym->identifier = identifier;
+    sym->identifier = identifier;
     sym->type = FUNCTION;
     sym->value = NULL;
     init_param(sym);
@@ -113,8 +108,7 @@ symbol* create_symbol_function(char* identifier) {
  */
 symbol* create_symbol_string(char* identifier, char* value) {
     symbol *sym = init_symbol();
-    strcpy(sym->identifier, identifier);
-    //sym->identifier = identifier;
+    sym->identifier = identifier;
     sym->type = STRING;
     strcpy(sym->value, value);
     //sym->value = value;
@@ -129,8 +123,7 @@ symbol* create_symbol_string(char* identifier, char* value) {
  */
 symbol* create_symbol_nil(char* identifier) {
     symbol *sym = init_symbol();
-    strcpy(sym->identifier, identifier);
-    //sym->identifier = identifier;
+    sym->identifier = identifier;
     sym->type = NIL;
     sym->value = NULL;
     init_param(sym);
