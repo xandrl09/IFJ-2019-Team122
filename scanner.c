@@ -751,10 +751,7 @@ void getLineOfTokens(tDLList *tokenQueue) {
                 break;
 
             case STATE_OPERATOR:    // state for operator
-                if (isDigit(receivedChar) && previousChar == '-')   {
-                    currentState = STATE_NUMBER;
-                }
-                else if (receivedChar != '=' && previousChar == '!') {
+                if (receivedChar != '=' && previousChar == '!') {
                     if (!isWhitespace(receivedChar))
                         returnLastCharToInput(buffer, receivedChar);
                     currentState = STATE_ERROR;
@@ -818,7 +815,6 @@ void getLineOfTokens(tDLList *tokenQueue) {
     }
     handleEOF(tokenQueue, buffer, &currentState, positionInLine);
     tokenQueue->Act = tokenQueue->First;
-    printQueueContents(tokenQueue);
 }
 
 
