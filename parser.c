@@ -287,7 +287,7 @@ if (data->token.type != (_type)) errSyn()
             /// pravidlo 10: <code> -> <inner_func> EOL
             gen_code_from_line(function_call);
             inner_func(data);
-            
+
             GET_TOKEN();
             CHECK_TYPE(T_EOL);
 
@@ -340,7 +340,7 @@ if (data->token.type != (_type)) errSyn()
             }
          
             CHECK_TYPE(T_ELSE);
-
+            gen_code_from_line(else_line);
             GET_TOKEN();
 
             CHECK_TYPE(T_COLON);
@@ -366,7 +366,7 @@ if (data->token.type != (_type)) errSyn()
                 GET_TOKEN();
             }
             //CHECK_TYPE(T_DEDENT);
-            gen_code_from_line(else_line);
+
             return SYNTAX_OK;
 
         case T_WHILE:
