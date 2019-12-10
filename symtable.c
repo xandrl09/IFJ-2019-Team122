@@ -30,7 +30,6 @@ void init_stack() {
         stack = tmp;
     }
     else {
-        printf("Error - init_stack\n");
         errInter();
     }
 }
@@ -58,7 +57,6 @@ symtable* symtable_init(int size) {
         return table;
     }
     else {
-        printf("Error - symtable_init\n");
         errInter();
         return NULL;
     }
@@ -197,7 +195,6 @@ bool is_in_stack(char *identifier) {
  *  - vrátí nalezení symbol
  */
 symbol *search_stack(char* identifier) {
-
     for(int i = stack->top; i > 0; i--) {
         if(stack->sym_table[i] == NULL)
             return NULL;
@@ -251,14 +248,14 @@ void symtable_delete(symtable *target) {
  */
 bool is_in_table(symtable *table, char* identifier) {
     if(table != NULL || identifier != NULL) {
-        if(search_sym(table, identifier) == NULL) {
+        symbol *tmp = search_sym(table, identifier);
+        if(tmp == NULL) {
             return 0;
         }
         else
             return 1;
     }
     else {
-        printf("Error - is_search_sym\n");
         errInter();
         return 0;
     }
@@ -269,7 +266,6 @@ bool is_in_table(symtable *table, char* identifier) {
  */
 symbol *search_sym(symtable *table, char* identifier) {
     if(table == NULL || identifier == NULL) {
-        printf("Error - search_sym\n");
         errInter();
         return 0;
     }
@@ -413,7 +409,6 @@ symbol *init_symbol() {
         return tmp;
     }
 	else {
-	    printf("Error - new_symbol\n");
 	    errInter();
 		return NULL;
 	}
@@ -431,7 +426,6 @@ parameter *new_param() {
         return tmp;
     }
     else {
-        printf("Error - new_param\n");
         free(tmp);
         errInter();
         return NULL;
