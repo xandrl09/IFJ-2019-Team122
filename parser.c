@@ -36,7 +36,7 @@ if (data->token.type != (_type)) errSyn()
     switch(data->token.type)
     {
         case T_DEF:
-
+            gen_code_from_line(def_line);
             ///Pravidlo 1: def ID ( <func_params> ) :EOL INDENT <main_func> DEDENT <main_body>
 
             GET_TOKEN();
@@ -59,7 +59,7 @@ if (data->token.type != (_type)) errSyn()
 
             GET_TOKEN();
             def_func_params(data);
-            gen_code_from_line(def_line);
+
 
             GET_TOKEN();
             CHECK_TYPE(T_COLON);
@@ -80,6 +80,7 @@ if (data->token.type != (_type)) errSyn()
                 GET_TOKEN();
             }
             gen_code_from_line(return_line);
+            gen_code_from_line(dedent);
             return main_body(data);
 
         case T_IF:
