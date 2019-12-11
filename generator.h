@@ -52,7 +52,7 @@ void gen_init();
 void gen_code_from_line(line_type line);
 void generate_header();
 void generate_variables_from_queue(tDLList *queue, char* scope);
-void prepare_line_of_tokens(tDLList *queue);
+void set_active_to_first_non_indent(tDLList *queue);
 void gen_var_declaration_code(Token *token, char* scope);
 void generate_variable(char* name, char* scope, tDLList *queue);
 void gen_function_def_args();

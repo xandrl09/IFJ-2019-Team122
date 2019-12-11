@@ -33,7 +33,9 @@ static FILE *inputFile;
 int createScanner(char *path) {
     inputFile = fopen(path, "r");
     if (inputFile == NULL) {
-        fprintf(stderr, "File cannot be opened! If you want to use stdin, set USING_PROG_ARGS to 1 in scanner.h\n");
+        if (USING_PROG_ARGS == 0)
+            printf("Nastav si USING_PROG_ARGS na 1!\n");
+        fprintf(stderr, "File cannot be opened/was not found!\n");
         return -1;
     }
     indentationStack = initStack();
@@ -390,7 +392,7 @@ char *handleEscapeSequence(char receivedChar, char *buffer) {
 }
 
 int isViableChar(char c) {
-    bool res = (c == '+' || c == '-' || c == '*' || c == '/' || c == '!' || c == '?' || c == '=') || c == '.';
+    bool res = (c == '+' || c == '-' || c == '*' || c == '/' || c == '!' || c == '=') || c == '.';
     return (isDigit(c) || isDelimiter(c) || isSpecialChar(c) || isWhitespace(c) || res || isLetter(c));
 }
 
@@ -569,10 +571,11 @@ int generateDEDENTTokens(tDLList *queue, int i) {
         res++;
         saveTokenAndReset(queue, DEDENT, "", NULL, res);
         if (popped == 0)
-            errSyn();
+            errLex();
     }
     if (i != top(indentationStack))
-        errSyn();
+        errLex();
+        //errSyn();
     return res;
 }
 
@@ -633,6 +636,7 @@ void getLineOfTokens(tDLList *tokenQueue) {
                     currentState = STATE_OPERATOR;
                 } else if (!isWhitespace(receivedChar)) {
                     currentState = STATE_ERROR;
+                    errLex();
                 }
                 break;
 
@@ -668,8 +672,9 @@ void getLineOfTokens(tDLList *tokenQueue) {
                 break;
 
             case STATE_NUMBER:  // state for number (not yet decided what kind)
-                if (strlen(buffer) == 2 && previousChar == '0' && receivedChar == '0') {
+                if (strlen(buffer) == 2 && previousChar == '0' && isDigit(receivedChar)){
                     currentState = STATE_ERROR;
+                    errLex();
                     continue;
                 } else if (receivedChar == '.') {
                     currentState = STATE_DECIMAL_NUM;
@@ -688,13 +693,14 @@ void getLineOfTokens(tDLList *tokenQueue) {
                 }
                 else if (!isDigit(receivedChar)) {
                     currentState = STATE_ERROR;
+                    errLex();
                 }
                 break;
 
             case STATE_DECIMAL_NUM: // state for decimal numbers
                 if ((previousChar == '.') && (!isDigit(receivedChar))) {
                     currentState = STATE_ERROR;
-                    continue;
+                    errLex();
                 } else if (receivedChar == 'e' || receivedChar == 'E') {
                     currentState = STATE_EXP_NUM;
                 } else if ((previousChar == 'e' || previousChar == 'E')
@@ -702,6 +708,7 @@ void getLineOfTokens(tDLList *tokenQueue) {
                     currentState = STATE_EXP_NUM;
                 } else if (receivedChar == '.') {
                     currentState = STATE_ERROR;
+                    errLex();
                     continue;
                 } else if (isDelimiter(receivedChar)) {
                     saveTokenAndReset(tokenQueue, floatingPoint, buffer, &currentState, positionInLine++);
@@ -714,15 +721,20 @@ void getLineOfTokens(tDLList *tokenQueue) {
             case STATE_EXP_NUM: // state for exponential numbers
                 if (isDuplicateSignInNum(buffer) || receivedChar == '.') {
                     currentState = STATE_ERROR;
+                    errLex();
                     continue;
                 } else if (receivedChar == '0' && (previousChar == 'e' || previousChar == 'E')) {
                     if (!checkExponent(buffer)) {
                         currentState = STATE_ERROR;
+                        errLex();
                         continue;
                     }
                 } else if (isDelimiter(receivedChar)) {
+                    if (previousChar == 'e' || previousChar == 'E')
+                        errLex();
                     if (!checkExponent(buffer)) {
                         currentState = STATE_ERROR;
+                        errLex();
                         continue;
                     }
                     if (previousChar != 'e' && previousChar != 'E') {
@@ -733,6 +745,7 @@ void getLineOfTokens(tDLList *tokenQueue) {
                     returnLastCharToInput(buffer, receivedChar);
                     if (!checkExponent(buffer)) {
                         currentState = STATE_ERROR;
+                        errLex();
                         continue;
                     }
                     saveTokenAndReset(tokenQueue, floatingPoint, buffer, &currentState, positionInLine++);
@@ -758,6 +771,7 @@ void getLineOfTokens(tDLList *tokenQueue) {
                     if (!isWhitespace(receivedChar))
                         returnLastCharToInput(buffer, receivedChar);
                     currentState = STATE_ERROR;
+                    errLex();
                 } else {
                     if ((receivedChar != '/' && receivedChar != '=' && !isWhitespace(receivedChar)) ||
                         strlen(buffer) > 2) {
@@ -816,9 +830,13 @@ void getLineOfTokens(tDLList *tokenQueue) {
         }
         previousChar = receivedChar;
     }
+    if ((previousChar == 'E' || previousChar == 'e') &&
+        (currentState == STATE_NUMBER || currentState == STATE_DECIMAL_NUM || currentState == STATE_EXP_NUM))
+        errLex();
+    if (previousChar == '.')
+        errLex();
     handleEOF(tokenQueue, buffer, &currentState, positionInLine);
     tokenQueue->Act = tokenQueue->First;
-    //printQueueContents(tokenQueue);
 }
 
 
