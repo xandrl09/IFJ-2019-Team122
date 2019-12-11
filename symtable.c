@@ -509,6 +509,9 @@ void params_destroy(symbol *symbol) {
     }
 }
 
+/*
+ * Hashovací funkce získána z http://www.seg.rmit.edu.au/code/zwh-ipl/bitwisehash.c
+*/
 unsigned int hash_function(char* target, unsigned int tsize, unsigned int seed) {
     char c;
     unsigned int h;
