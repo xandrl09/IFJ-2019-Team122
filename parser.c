@@ -155,7 +155,7 @@ if (data->token.type != (_type)) errSyn()
             return main_func(data);
 
         case T_DEDENT:
-            gen_code_from_line(dedent);//fixme
+            //gen_code_from_line(dedent);//fixme
             /// pravidlo 40: <main_func> -> e
             return SYNTAX_OK;
 
@@ -268,7 +268,7 @@ if (data->token.type != (_type)) errSyn()
 
         case T_DEDENT:
             /// pravidlo 9: <main> -> e
-            gen_code_from_line(dedent);//fixme
+            //gen_code_from_line(dedent);//fixme
             return SYNTAX_OK;
 
         default:
@@ -366,9 +366,9 @@ if (data->token.type != (_type)) errSyn()
             main_(data);
  
             if(data->token.type != T_DEDENT)
-{
+            {
             CHECK_TYPE(T_EOL);
-}
+            }
             GET_TOKEN();
             while(data->token.type != T_DEDENT)
             {
