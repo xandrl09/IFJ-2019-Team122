@@ -16,7 +16,7 @@
 #define NUMBER_OF_DELIMITERS 3
 
 #define MAX_TOKEN_LEN 255
-#define USING_PROG_ARGS 1
+#define USING_PROG_ARGS 0
 
 
 // In case you want the scanner to scan the whole file, set this value to 1
