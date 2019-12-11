@@ -152,6 +152,7 @@ if (data->token.type != (_type)) errSyn()
         case T_RETURN:
             /// pravidlo 39: return <expr> <main_func>
             //gen_code_from_line(return_line);
+            GET_TOKEN();
             expression(data);
             return main_func(data);
 
