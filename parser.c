@@ -80,6 +80,10 @@ if (data->token.type != (_type)) errSyn()
                 GET_TOKEN();
             }
             gen_code_from_line(return_line);
+            while(data->token.type == T_DEDENT)
+            {
+                GET_TOKEN();
+            }
             gen_code_from_line(dedent);
             return main_body(data);
 
@@ -376,6 +380,10 @@ if (data->token.type != (_type)) errSyn()
                 CHECK_TYPE(T_EOL);
                 GET_TOKEN();
             }
+            while(data->token.type == T_DEDENT)
+            {
+                GET_TOKEN();
+            }
             gen_code_from_line(dedent);
             //CHECK_TYPE(T_DEDENT);
 
@@ -403,6 +411,10 @@ if (data->token.type != (_type)) errSyn()
             {
                 main_(data);
                 CHECK_TYPE(T_EOL);
+                GET_TOKEN();
+            }
+            while(data->token.type == T_DEDENT)
+            {
                 GET_TOKEN();
             }
             gen_code_from_line(dedent);
