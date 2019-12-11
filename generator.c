@@ -16,7 +16,7 @@
  * Closing labels are marked with *
  * Function arguments are marked with % and appropriate number, eg. %1, %2 etc.0
  * Return value is always called _retval
- * Flow control labels are marked with [&,*]_$, eg. &_$IF0, *_$WHILE32
+ * Flow control labels are marked with [&,*]_$, eg. &_$IF0, &_$WHILE32
  * &_$bool1 - used in gen_expression_to_bool, only one instance
  * &_$nil1 - used in gen_expression_to_bool, only one instance
  * $op1, $op2, $op1type, $op2type
@@ -123,7 +123,8 @@ void handle_function_call_with_assignment() {
     else if (scope_nesting_lvl > 0 && !is_duplicate_definition(tokenQueue->First->value, local_var_scope))     {
         DLInsertLast(local_var_scope, identifier, tokenQueue->First->value, -1);
     }
-    DLFirst(tokenQueue);
+    //DLFirst(tokenQueue);
+    set_active_to_first_non_indent(tokenQueue);
     DLSucc(tokenQueue);
     DLSucc(tokenQueue);
     handle_function_call();
@@ -201,7 +202,8 @@ tDLList get_expression_queue(int to_skip) {
         DLInsertLast(expression_queue, tokenQueue->Act->type, tokenQueue->Act->value, -1);
         DLSucc(tokenQueue);
     }
-    DLFirst(expression_queue);
+    //DLFirst(expression_queue);
+    set_active_to_first_non_indent(tokenQueue);
     return *expression_queue;
 }
 
@@ -210,7 +212,8 @@ tDLList get_expression_queue(int to_skip) {
  * if z:
  */
 void handle_if() {
-    DLFirst(tokenQueue);
+    //DLFirst(tokenQueue);
+    set_active_to_first_non_indent(tokenQueue);
     tDLList expression;
     int is_relational = is_relational_op(tokenQueue->First->rptr->rptr->value);
     expression = get_expression_queue(1);
@@ -248,7 +251,8 @@ void handle_else()  {
  * a = 4 + d * 3
  */
 void handle_assignment()    {
-    DLFirst(tokenQueue);
+    //DLFirst(tokenQueue);
+    set_active_to_first_non_indent(tokenQueue);
     if(scope_nesting_lvl <= 0 && !is_duplicate_definition(tokenQueue->First->value, global_var_scope)) {
         DLInsertLast(global_var_scope, identifier, tokenQueue->First->value, -1);
     }
@@ -256,7 +260,8 @@ void handle_assignment()    {
         DLInsertLast(local_var_scope, identifier, tokenQueue->First->value, -1);
     }
     tDLList expression = get_expression_queue(2);
-    if (tokenQueue->First->rptr->rptr->rptr->type == Operator)
+    set_active_to_first_non_indent(tokenQueue);
+    if (tokenQueue->Act->rptr->rptr->rptr->type == Operator)
         postfix_expr = infix_2_postfix(&expression);
     else
         Tpush(&postfix_expr, *tokenQueue->First->rptr->rptr);
@@ -293,7 +298,8 @@ void handle_return()   {
 }
 
 void handle_def() {
-    DLFirst(tokenQueue);
+    //DLFirst(tokenQueue);
+    set_active_to_first_non_indent(tokenQueue);
     char *lbl = tokenQueue->First->rptr->value;
     strcpy(current_func_lbl, lbl);
     printf("JUMP *%s\n", lbl); // jump to the end of function
@@ -352,9 +358,13 @@ void gen_print_method(int num_of_args) {
     printf("PUSHFRAME\n");
     printf("DEFVAR LF@_retval\n");
     printf("MOVE LF@_retval nil@nil\n");
+    int first = 1;
     for(int i = 1; i <= num_of_args; i++) {
+        if (first)
+            first = 0;
+        else
+            printf("WRITE string@\\032\n");
         printf("WRITE LF@%%%i\n", i);
-        printf("WRITE string@\\032\n");
     }
     printf("WRITE string@\\010\n"); // put end of line
     printf("POPFRAME\n");
@@ -369,8 +379,11 @@ char* get_type_and_edit_value(Token *token)    {
         case floatingPoint:
             sprintf(token->value, "%a", atof(token->value));
             return "float";
-        case integer: return "int";
+        case integer:
+            sprintf(token->value, "%d", atoi(token->value));
+            return "int";
         case string:
+        case docString:
             turn_whitespace_to_ascii(token);
             return "string";
         case identifier: return "LF";
@@ -407,8 +420,9 @@ void turn_whitespace_to_ascii(Token *token) {
  * Function signature looks like this: def foo(arg1, arg2):
  */
 void gen_function_def_args() {
-    DLFirst(tokenQueue);
-    tokenQueue->Act = tokenQueue->First->rptr->rptr->rptr; // first argument is now active
+    //DLFirst(tokenQueue);
+    set_active_to_first_non_indent(tokenQueue);
+    tokenQueue->Act = tokenQueue->Act->rptr->rptr->rptr; // first argument is now active
     int arg_cnt = 0;
     while(tokenQueue->Act != NULL && tokenQueue->Act->type != specialChar && tokenQueue->Act->type != EOL)  {
         printf("DEFVAR LF@%s\n", tokenQueue->Act->value);
@@ -474,15 +488,15 @@ void gen_var_declaration_code(Token *token, char *scope) {
  * @brief Takes line of tokens from scanner and cuts INDENT and DEDENT tokens
  * @param queue Queue of tokens that's supposed to be prepared
  */
-void prepare_line_of_tokens(tDLList *queue) {
+void set_active_to_first_non_indent(tDLList *queue) {
     DLFirst(queue);
     while(queue->Act->type == DEDENT || queue->Act->type == INDENT) {
         DLSucc(queue);
-        free(queue->First);
+        /*free(queue->First);
         queue->First = queue->Act;
-        queue->First->lptr = NULL;
+        queue->First->lptr = NULL;*/
     }
-    DLFirst(queue);
+    //DLFirst(queue);
 }
 
 
@@ -729,13 +743,43 @@ void gen_init() {
     //*code_gen_stack = CDinit_stack(result);
 }
 
+char* get_line_type_string(line_type line)  {
+    switch(line)    {
+        case def_line: return "def_line";
+        case function_call_with_assignment: return "function_call_with_assignment";
+        case function_call: return "function_call";
+        case assignment: return "assignment";
+        case if_line: return "if_line";
+        case else_line: return "else_line";
+        case dedent: return "dedent";
+        case return_line: return "return_line";
+        case while_line: return "while_line";
+        case end_of_feed: return "end_of_feed";
+        default:
+            printf("Detected unsupported line_type %i. Napis Markovi :^)\n", line);
+    }
+}
+
+void print_gen_debug_info(line_type line) {
+    DLFirst(tokenQueue);
+    printf("\n# ~~~~~ Current line: "  );
+    while(tokenQueue->Act != NULL)  {
+        printf("%s ", tokenQueue->Act->value);
+        DLSucc(tokenQueue);
+    }
+    printf("|||  line_type called: %s ~~~~~~\n", get_line_type_string(line));
+    DLFirst(tokenQueue);
+}
+
 /**
  * @brief Main function of code generator, works with global tokenQueue
  * @param line Line of Tokens representing current line in program
  */
 void gen_code_from_line(line_type line) {
     Token *token = tokenQueue->Act;
-    prepare_line_of_tokens(tokenQueue);
+
+    print_gen_debug_info(line);
+    set_active_to_first_non_indent(tokenQueue);
     postfix_expr = TinitStack();
     switch(line)    {
         case def_line:
@@ -743,7 +787,7 @@ void gen_code_from_line(line_type line) {
             handle_def();
             break;
         case function_call:
-            DLFirst(tokenQueue);
+            //DLFirst(tokenQueue);
             handle_function_call();
             break;
         case function_call_with_assignment:
