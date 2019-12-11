@@ -176,6 +176,9 @@ if (data->token.type != (_type)) errSyn()
     switch (data->token.type)
     {
         case T_ID:
+        case T_INT:
+        case T_FLOAT:
+        case T_STRING:
             /// pravidlo 4: <def_func_params> -> "ID" <func_param_x>
            //insert_param( data->function_name,  data->ptoken->data->string, STRING);//fixme
 
@@ -206,7 +209,14 @@ if (data->token.type != (_type)) errSyn()
             /// pravidlo 6: <func_param_x> -> "," "ID" <func_param_x>
 
             GET_TOKEN();
-            CHECK_TYPE(T_ID);
+            if (data->token.type == T_ID || data->token.type == T_STRING || data->token.type == T_INT || data->token.type == T_FLOAT )
+            {
+            }
+            else
+            {
+                errSyn();
+                return SYNTAX_ERROR;
+            }
            //insert_param( data->function_name,  data->ptoken->data->string, STRING);//fixme
 
             GET_TOKEN();
@@ -677,6 +687,9 @@ if (data->token.type != (_type)) errSyn()
     switch (data->token.type)
     {
         case T_ID:
+        case T_INT:
+        case T_FLOAT:
+        case T_STRING:
             // pravidlo 22: <call_func_params> ->  ID <call_func_param_x>
 
             /// kontrola zda je parametr v parametrech funkce
@@ -740,7 +753,14 @@ if (data->token.type != (_type)) errSyn()
         case T_COMMA:
             /// pravidlo 24: <call_func_param_x> -> , ID <call_func_param_x>
             GET_TOKEN();
-            CHECK_TYPE(T_ID);
+            if (data->token.type == T_ID || data->token.type == T_STRING || data->token.type == T_INT || data->token.type == T_FLOAT )
+            {
+            }
+            else
+            {
+                errSyn();
+                return SYNTAX_ERROR;
+            }
             //data->number_of_params ++;
 
             /// kontrola zda je parametr v parametrech funkce
