@@ -42,18 +42,6 @@ if (data->token.type != (_type)) errSyn()
             GET_TOKEN();
             CHECK_TYPE(T_ID);
 
-//            /// pokud již byla funkce definována fixme
-//            if(is_in_stack( data->ptoken->data->string))
-//            {
-//                errSemDef();
-//            }
-//            /// uložení funkce do symtable
-//            else
-//            {
-//                create_insert_symbol(data->ptoken->data->string, FUNCTION,  NULL);
-//                //data->function_name = data->ptoken->data->string;
-//            }
-
             GET_TOKEN();
             CHECK_TYPE(T_LBRACK);
 
@@ -151,12 +139,10 @@ if (data->token.type != (_type)) errSyn()
 
         case T_RETURN:
             /// pravidlo 39: return <expr> <main_func>
-            //gen_code_from_line(return_line);
             expression(data);
             return main_func(data);
 
         case T_DEDENT:
-            //gen_code_from_line(dedent);//fixme
             /// pravidlo 40: <main_func> -> e
             return SYNTAX_OK;
 
@@ -181,8 +167,6 @@ if (data->token.type != (_type)) errSyn()
         case T_FLOAT:
         case T_STRING:
             /// pravidlo 4: <def_func_params> -> "ID" <func_param_x>
-           //insert_param( data->function_name,  data->ptoken->data->string, STRING);//fixme
-
             GET_TOKEN();
             func_param_x(data);
             return SYNTAX_OK;
@@ -218,7 +202,6 @@ if (data->token.type != (_type)) errSyn()
                 errSyn();
                 return SYNTAX_ERROR;
             }
-           //insert_param( data->function_name,  data->ptoken->data->string, STRING);//fixme
 
             GET_TOKEN();
             func_param_x(data);
@@ -269,7 +252,6 @@ if (data->token.type != (_type)) errSyn()
 
         case T_DEDENT:
             /// pravidlo 9: <main> -> e
-            //gen_code_from_line(dedent);//fixme
             return SYNTAX_OK;
 
         default:
@@ -324,7 +306,6 @@ if (data->token.type != (_type)) errSyn()
 
             CHECK_TYPE(T_COLON);
 
-
             GET_TOKEN();
             CHECK_TYPE(T_EOL);
 
@@ -346,7 +327,7 @@ if (data->token.type != (_type)) errSyn()
            CHECK_TYPE(T_DEDENT);
 
             GET_TOKEN();
-            while(data->token.type == T_DEDENT)//TODO DEDENT PRO VNORENY IF
+            while(data->token.type == T_DEDENT)
             {
                 GET_TOKEN();
             }
@@ -379,7 +360,6 @@ if (data->token.type != (_type)) errSyn()
             }
 
             gen_code_from_line(dedent);
-            //CHECK_TYPE(T_DEDENT);
 
             return SYNTAX_OK;
 
@@ -407,9 +387,9 @@ if (data->token.type != (_type)) errSyn()
                 CHECK_TYPE(T_EOL);
                 GET_TOKEN();
             }
-           
+
             gen_code_from_line(dedent);
-            //CHECK_TYPE(T_DEDENT);
+
             return SYNTAX_OK;
 
         case T_ID:
@@ -462,36 +442,6 @@ if (data->token.type != (_type)) errSyn()
         case T_LBRACK:
             /// pravidlo 16: <identif> -> (<call_func_params>) EOL
 
-            
-            /// ID je v symtable
-//            if(symtable_search(data->table, data->second_token->data->string) )
-//            {
-//                /// je to funkce
-//                if(func_search(data->table, data->second_token->data->string))
-//                {
-//                    //volani funkce TODO
-//
-//                }
-//                    ///je to proměná
-//                else
-//                {
-//                    return SEM_ERR_UNDEFINED_VAR;
-//                }
-//            }
-//            else
-//            {
-//                ///  u funkce je  chyba pokud je volaná nedeklarovaná z hlavního těla
-//                /// je volana z funkce
-//                if(data->in_function)
-//                {
-//                    //todo zapamatovat si že nebyla inicializovaná a na konci zkontrolovat jestli byla v průběhu inicializovana
-//                    // pokud nebyla inicializovana tak pak nakonec:  return SEM_ERR_UNDEFINED_VAR;
-//                }
-//                else
-//                {
-//                    return SEM_ERR_UNDEFINED_VAR;
-//                }
-//            }
             gen_code_from_line(function_call);
             GET_TOKEN();
             call_func_params(data);
@@ -503,17 +453,6 @@ if (data->token.type != (_type)) errSyn()
 
         case T_EQ_ASSIG:
         /// rule 17: <identif> -> = <ins>
-//            if(symtable_search(data->table, data->second_token->data->string) == false)
-//            {
-//            }
-//
-//            data->table->hash_arr = symtable_lookup_add(data->table, data->second_token->data->string);
-//            //data->op = new_operand(data->table->sym);
-//
-//            /// second_token = kam se prirazuje
-//            data->result = data->second_token;
-//            data->second_token->type = T_NONE;
-//
 
             GET_TOKEN();
             return ins(data);
@@ -592,63 +531,6 @@ if (data->token.type != (_type)) errSyn()
             GET_TOKEN();
             CHECK_TYPE(T_EOL);
             ///second_token = function ID
-//            data->func_id = data->second_token;
-//            data->second_token->type = T_NONE;
-
-
-            /// ID je v symtable
-//            if(symtable_search(data->table, data->second_token->data->string))
-//            {
-//                /// je to funkce
-//                if(func_search(data->table, data->second_token->data->string))
-//                {
-//                    //volani funkce
-//
-//                }
-//                    ///je to proměná
-//                else
-//                {
-//                    return SEM_ERR_UNDEFINED_VAR;
-//                }
-//            }
-//            else
-//            {
-//                ///  u funkce je  chyba pokud je volaná nedeklarovaná z hlavního těla
-//                /// je volana z funkce
-//                if(data->in_function)
-//                {
-//                    //todo zapamatovat si že nebyla inicializovaná a na konci zkontrolovat jestli byla v průběhu inicializovana
-//                    // pokud nebyla inicializovana tak pak nakonec:  return SEM_ERR_UNDEFINED_VAR;
-//                }
-//                else
-//                {
-//                    return SEM_ERR_UNDEFINED_VAR;
-//                }
-//            }
-
-           // if(data->token.type == T_ID)
-            //{
-                /// kontrola zda je parametr v parametrech funkce
-//                 if(arg_search(data->table, data->func_id->data->string, data->token->data->string) == false)return SEM_ERR_WRONG_FUNC_PARAMS ;
-//
-//                 data->number_of_params = 1;
-                //GET_TOKEN();
-                //call_func_param_x(data);
-
-                ///kontrola poctu parametru
-//                Symbol* s = func_add(data->table, data->func_id->data->string);
-//                int i = arg_count(s);
-//                if(data->number_of_params != i)return SEM_ERR_WRONG_FUNC_PARAMS;
-            //}
-           // else
-           // {
-              //  GET_TOKEN();
-               // call_func_params(data);
-           // }
-
-
-            //GET_TOKEN();
-            //CHECK_TYPE(T_EOL);
 
             return SYNTAX_OK;
 
@@ -693,49 +575,18 @@ if (data->token.type != (_type)) errSyn()
         case T_INT:
         case T_FLOAT:
         case T_STRING:
-            // pravidlo 22: <call_func_params> ->  ID <call_func_param_x>
-
-            /// kontrola zda je parametr v parametrech funkce
-            //if(arg_search(data->table, data->func_id->data->string, data->token->data->string) == false)return SEM_ERR_WRONG_FUNC_PARAMS ;
+            /// pravidlo 22: <call_func_params> ->  ID <call_func_param_x>
 
             GET_TOKEN();
-            //data->number_of_params = 1;
+
             call_func_param_x(data);
 
-
-            ///kontrola poctu parametru
-//            Symbol* s = func_add(data->table, data->func_id->data->string);
-//            int i = arg_count(s);
-//            if(data->number_of_params != i)return SEM_ERR_WRONG_FUNC_PARAMS;
-
-            //CHECK_TYPE(T_RBRACK);
             return SYNTAX_OK;
 
         case T_RBRACK:
             /// pravidlo 23: <call_func_param_x> -> e
-
-            /// fuknce již nemá další parametry
             return SYNTAX_OK;
 
-//            /// ID první parametr funkce
-//        case T_ID:
-//            // pravidlo 23: <call_func_params> ->  ID <call_func_param_x>
-//
-//
-//            /// kontrola zda je parametr v parametrech funkce
-//            if(arg_search(data->table, data->func_id->data->string, data->token->data->string) == false)return SEM_ERR_WRONG_FUNC_PARAMS ;
-//
-//            GET_TOKEN();
-//            data->number_of_params = 1;
-//            result = call_func_param_x(data);
-//            if (result != SYNTAX_OK) return result;
-//
-//            ///kontrola poctu parametru
-//             s = func_add(data->table, data->func_id->data->string);
-//             i = arg_count(s);
-//            if(data->number_of_params != i)return SEM_ERR_WRONG_FUNC_PARAMS;
-//
-//            return SYNTAX_OK;
 
         default:
             errSyn();
@@ -764,10 +615,6 @@ if (data->token.type != (_type)) errSyn()
                 errSyn();
                 return SYNTAX_ERROR;
             }
-            //data->number_of_params ++;
-
-            /// kontrola zda je parametr v parametrech funkce
-            //if(arg_search(data->table, data->func_id->data->string, data->token->data->string) == false)return SEM_ERR_WRONG_FUNC_PARAMS ;
 
             GET_TOKEN();
             return call_func_param_x(data);
@@ -775,7 +622,6 @@ if (data->token.type != (_type)) errSyn()
         case T_RBRACK:
             /// pravidlo 25: <call_func_param_x> -> e
 
-            /// fuknce již nemá další parametry
             return SYNTAX_OK;
 
         default:
@@ -791,7 +637,7 @@ if (data->token.type != (_type)) errSyn()
  */
  int inner_func(MainData* data)
 {
- //gen_code_from_line(function_call);   
+
     switch (data->token.type)
     {
         case T_INPUTS:
@@ -985,7 +831,6 @@ if (data->token.type != (_type)) errSyn()
  */
 int parse()
 {
-    //extern table_stack *stack;
     init_symtable(255);
     int result;
 
@@ -999,9 +844,9 @@ int parse()
     data->third_token = *token_init();
     data->third_token.type = T_NONE;
 
-    data->table = symtable_init(100); // FIXME
+    data->table = symtable_init(100);
     data->function_name = NULL;
-    //(data)->number_of_params = 0;
+
 
     result = main_body(data);
     return result;
