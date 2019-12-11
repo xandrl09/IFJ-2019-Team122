@@ -42,17 +42,17 @@ if (data->token.type != (_type)) errSyn()
             GET_TOKEN();
             CHECK_TYPE(T_ID);
 
-            /// pokud již byla funkce definována fixme
-            if(is_in_stack( data->ptoken->data->string))
-            {
-                errSemDef();
-            }
-            /// uložení funkce do symtable
-            else
-            {
-                create_insert_symbol(data->ptoken->data->string, FUNCTION,  NULL);
-                //data->function_name = data->ptoken->data->string;
-            }
+//            /// pokud již byla funkce definována fixme
+//            if(is_in_stack( data->ptoken->data->string))
+//            {
+//                errSemDef();
+//            }
+//            /// uložení funkce do symtable
+//            else
+//            {
+//                create_insert_symbol(data->ptoken->data->string, FUNCTION,  NULL);
+//                //data->function_name = data->ptoken->data->string;
+//            }
 
             GET_TOKEN();
             CHECK_TYPE(T_LBRACK);
@@ -80,10 +80,7 @@ if (data->token.type != (_type)) errSyn()
                 GET_TOKEN();
             }
             gen_code_from_line(return_line);
-            while(data->token.type == T_DEDENT)
-            {
-                GET_TOKEN();
-            }
+
             gen_code_from_line(dedent);
             return main_body(data);
 
@@ -380,10 +377,7 @@ if (data->token.type != (_type)) errSyn()
                 CHECK_TYPE(T_EOL);
                 GET_TOKEN();
             }
-            while(data->token.type == T_DEDENT)
-            {
-                GET_TOKEN();
-            }
+
             gen_code_from_line(dedent);
             //CHECK_TYPE(T_DEDENT);
 
@@ -413,10 +407,7 @@ if (data->token.type != (_type)) errSyn()
                 CHECK_TYPE(T_EOL);
                 GET_TOKEN();
             }
-            while(data->token.type == T_DEDENT)
-            {
-                GET_TOKEN();
-            }
+           
             gen_code_from_line(dedent);
             //CHECK_TYPE(T_DEDENT);
             return SYNTAX_OK;
@@ -425,8 +416,8 @@ if (data->token.type != (_type)) errSyn()
             /// pravidlo 14: <code> -> ID <identif>
             data->second_token = data->token;
             GET_TOKEN();
-            return identif(data);
-
+            identif(data);
+            return SYNTAX_OK;
 
         case T_PASS:
             ///pravidlo 37: <main> -> EOL<main>
@@ -549,7 +540,7 @@ if (data->token.type != (_type)) errSyn()
         case T_INT:
         case T_FLOAT:
         case T_STRING:
-            // rule 18: <ins> -> EXPR EOL
+            /// rule 18: <ins> -> EXPR EOL
            
             gen_code_from_line(assignment);
             expression(data);
@@ -557,13 +548,13 @@ if (data->token.type != (_type)) errSyn()
             CHECK_TYPE(T_EOL);
 
             return SYNTAX_OK;
+
         case T_ID:
-            // pravidlo 19: <ins> -> ID <ins_id>
+            /// pravidlo 19: <ins> -> ID <ins_id>
             data->second_token = data->token;
             GET_TOKEN();
 
             return ins_id(data);
-
 
         case T_INPUTI:
         case T_INPUTF:
