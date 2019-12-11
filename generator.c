@@ -387,8 +387,36 @@ char* get_type_and_edit_value(Token *token)    {
             turn_whitespace_to_ascii(token);
             return "string";
         case identifier: return "LF";
+        case builtInFunc:
+            fprintf(stderr, "Encountered built-in-function used as variable");
+            break;
         default: fprintf(stderr, "Encountered some strange token in generator, type: %i\n", token->type);
     }
+}
+
+char *replace_word(char* s, char* old, char* new)   {
+    char* result;
+    int i, cnt = 0;
+    int new_len = strlen(new);
+    int old_len = strlen(old);
+    for (int i = 0; s[i] != '\0'; i++)  {
+        if (strstr(&s[i], old) == &s[i]) {
+            cnt++;
+            i += old_len - 1;
+        }
+    }
+    result = (char*) malloc(i + cnt*(new_len - old_len) + 1);
+    i = 0;
+    while(*s)   {
+        if (strstr(s, old) == s)    {
+            strcpy(&result[i], new);
+            i += new_len;
+            s += old_len;
+        } else
+            result[i++] = *s++;
+    }
+    result[i] = '\0';
+    return result;
 }
 
 void turn_whitespace_to_ascii(Token *token) {
@@ -651,6 +679,8 @@ void gen_op1_is_int()  {
 void gen_ops_are_int(char *operator_value) {
     printf("LABEL $ops_are_int%i\n", typecheck_jumps_id);
     printf("PUSHS GF@$op2\n");
+    if (strcmp(operator_value, "/") == 0)
+        printf("I"); // this is for IDIVS
     gen_expression_operation(operator_value);
     printf("JUMP $type_check_passed%i\n", typecheck_jumps_id);
 }
@@ -756,7 +786,7 @@ char* get_line_type_string(line_type line)  {
         case while_line: return "while_line";
         case end_of_feed: return "end_of_feed";
         default:
-            printf("Detected unsupported line_type %i. Napis Markovi :^)\n", line);
+            fprintf(stderr, "Detected unsupported line_type %i. Napis Markovi :^)\n", line);
     }
 }
 
